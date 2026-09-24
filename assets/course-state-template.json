@@ -1,0 +1,56 @@
+{
+  "schema_version": 2,
+  "project": {
+    "title": "",
+    "baseline_contract": "current learning scope starts from zero unless otherwise specified",
+    "last_updated": ""
+  },
+  "coverage_areas": [
+    {
+      "id": "AREA-001",
+      "title": "",
+      "state": "OPEN",
+      "evidence": []
+    }
+  ],
+  "materials": [
+    {
+      "id": "MAT-001",
+      "label": "",
+      "roles": [],
+      "observed_scope": [],
+      "relation_to_existing": "new",
+      "notes": ""
+    }
+  ],
+  "knowledge_nodes": [
+    {
+      "id": "K-001",
+      "title": "",
+      "source_level": "A",
+      "canonical_anchor": "",
+      "prerequisites": [],
+      "assessment_status": "unknown",
+      "evidence_material_ids": [],
+      "aliases": []
+    }
+  ],
+  "symbols": [
+    {
+      "notation": "",
+      "meaning": "",
+      "defined_at_knowledge_id": "K-001",
+      "unit_or_dimension": "",
+      "notation_notes": ""
+    }
+  ],
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "source_material_id": "MAT-001",
+      "required_knowledge_ids": [],
+      "assessment_signal": "unknown"
+    }
+  ],
+  "last_delta": []
+}

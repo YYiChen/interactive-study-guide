@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<!--
+  Interactive Study Guide v4.0 Final · 通用工科/工程数学学习页模板
+
+  原则：
+  - 本模板提供成熟 UI/导航引擎，不规定具体学科知识。
+  - 默认用于零基础预习；正式教学、例题/训练、复习总结分层。
+  - 不强制“每题一个前置知识块”；依赖缺口按 recall / bridge / 回修正文处理。
+  - 不强制每页固定数量的自检、表格、动效或练习；是否加入由学习任务决定。
+  - 复习内容默认收口到一个“🧾 总结”一级入口。
+  - 新增知识优先回到其 Canonical Teaching Location，不在页面末尾堆“补充”。
+
+  结构与规则见 references/teaching-architecture.md、content-rules.md、page-structure.md。
+  完成后运行：node scripts/check_page.js <page.html>
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>【课程代号】学习页 · 【单元名】</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  :root{
+    --bg:#ffffff; --panel:#f6f8fc; --ink:#1f2733; --muted:#5b6b7f; --line:#e2e8f0;
+    --accent:#2563eb; --accent2:#0f766e; --warn:#b45309; --pink:#be185d; --purple:#7c3aed;
+    --codebg:#f1f5f9; --ok:#15803d;
+  }
+  *{box-sizing:border-box;}
+  body{font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.85; margin:0; padding:0 0 70px;}
+  .topbar{position:sticky; top:0; z-index:60; background:#fff; border-bottom:2px solid var(--accent);
+    box-shadow:0 1px 8px rgba(0,0,0,.07);}
+  .topbar-inner{max-width:1060px; margin:0 auto; display:flex; align-items:center; gap:10px;
+    padding:7px 14px; flex-wrap:wrap;}
+  .brand{font-weight:700; color:var(--accent); white-space:nowrap; font-size:14.5px;}
+  .tabs{display:flex; gap:3px; flex-wrap:wrap;}
+  .tabbtn{border:none; background:transparent; padding:6px 12px; border-radius:8px; cursor:pointer;
+    font-size:13.5px; color:var(--muted); font-family:inherit;}
+  .tabbtn:hover{background:var(--panel); color:var(--ink);}
+  .tabbtn.active{background:var(--accent); color:#fff;}
+  .wrap{max-width:1000px; margin:0 auto; padding:26px 26px 40px;}
+  h1{font-size:26px; margin:6px 0 4px; border-bottom:3px solid var(--accent); padding-bottom:10px;}
+  h2{font-size:20.5px; margin:34px 0 6px; color:var(--accent); border-left:5px solid var(--accent);
+     padding-left:12px; display:flex; align-items:center; gap:10px;}
+  h3{font-size:17.5px; margin:24px 0 6px; color:var(--accent2);}
+  h4{font-size:15.5px; margin:18px 0 4px; color:#334155;}
+  p,li{margin:8px 0;}
+  .sub{color:var(--muted); font-size:13.5px; margin-bottom:14px;}
+  table{border-collapse:collapse; width:100%; margin:14px 0; font-size:14.5px;}
+  th,td{border:1px solid var(--line); padding:9px 11px; text-align:left; vertical-align:top;}
+  th{background:var(--panel); font-weight:600;}
+  tr:nth-child(even) td{background:#fbfdff;}
+  .box{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin:14px 0;}
+  .note{background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 14px; margin:12px 0; color:#7c4a03;}
+  .tip{background:#ecfeff; border:1px solid #a5f3fc; border-radius:8px; padding:10px 14px; margin:12px 0;}
+  .ok{background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 14px; margin:12px 0; color:#14532d;}
+  .memo{background:#f0fdfa; border:1.5px solid #5eead4; border-radius:10px; padding:11px 15px; margin:14px 0; color:#134e4a;}
+  .memo b{color:var(--accent2);}
+  .why{background:#fdf2f8; border:1px solid #fbcfe8; border-radius:8px; padding:10px 14px; margin:12px 0; color:#831843;}
+  .why .w{font-weight:700; color:var(--pink);}
+  code{background:var(--codebg); padding:2px 6px; border-radius:5px; font-size:13.5px;
+       font-family:"SFMono-Regular",Consolas,monospace;}
+  .eq{background:#f8fafc; border:1px dashed var(--line); border-radius:8px; padding:12px 16px 14px;
+      margin:12px 0; overflow-x:auto; overflow-y:hidden;}
+  .q{background:#eef2ff; border-left:4px solid var(--purple); border-radius:6px; padding:12px 16px; margin:14px 0;}
+  .q .qt{font-weight:700; color:var(--purple);}
+  .q .en{font-family:Georgia,"Times New Roman",serif; font-size:14.5px;}
+  .ans{background:#f0fdf4; border-left:4px solid var(--ok); border-radius:6px; padding:10px 16px; margin:8px 0;}
+  .ans .at{font-weight:700; color:var(--ok);}
+  .exp{background:#fffbeb; border-left:4px solid #f59e0b; border-radius:6px; padding:10px 16px; margin:8px 0; color:#78350f;}
+  .exp .et{font-weight:700; color:#b45309;}
+  .steps{background:#fafafa; border:1px solid var(--line); border-radius:8px; padding:8px 16px 8px 8px; margin:8px 0;}
+  .steps ol{margin:4px 0; padding-left:24px;}
+  .steps li{margin:4px 0;}
+  ul{margin:8px 0; padding-left:22px;}
+  .diag{background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px 12px 8px; margin:14px 0; text-align:center;}
+  .diag svg{display:block; margin:0 auto; max-width:100%; height:auto;}
+  .cap{font-size:12.5px; color:var(--muted); margin:6px 0 6px;}
+  .pager{display:flex; justify-content:space-between; gap:10px; margin:30px 0 6px;}
+  .pager button{border:1px solid var(--line); background:#fff; color:var(--accent); padding:9px 16px;
+    border-radius:9px; cursor:pointer; font-size:14px; font-family:inherit;}
+  .pager button:hover{background:var(--panel);}
+  .chips{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;}
+  .chips button{border:1px solid var(--line); background:var(--panel); color:var(--accent); padding:6px 14px;
+    border-radius:18px; cursor:pointer; font-size:13px; font-family:inherit;}
+  .chips button:hover{background:#e0e7ff;}
+  /* 初学者层：导读 / 人话翻译 / 自检 */
+  .intro{background:linear-gradient(180deg,#f8fafc,#fff); border:1px solid var(--line); border-left:5px solid #0f766e;
+    border-radius:12px; padding:16px 22px; margin:18px 0 22px;}
+  .intro .ih{font-size:16.5px; font-weight:700; color:#0f766e; margin-bottom:10px;}
+  .intro p{line-height:2.0; margin:9px 0;}
+  .intro .iq{background:#f0fdfa; border-radius:10px; padding:12px 16px; margin:12px 0 4px; line-height:2.0; border:1px dashed #99f6e4;}
+  .tr{font-size:13.5px; color:#0f766e; background:#f0fdfa; border-left:3px solid #5eead4; border-radius:0 8px 8px 0;
+    padding:8px 14px; margin:8px 0 14px; line-height:1.95;}
+  .tr b{color:#0d9488;}
+  .chk{font-size:13.5px; color:#4338ca; background:#eef2ff; border-left:3px solid #a5b4fc; border-radius:0 8px 8px 0;
+    padding:8px 14px; margin:12px 0 16px; line-height:1.95;}
+  .chk b{color:#3730a3;}
+  /* ---- 板块折叠卡片（accordion）：让"一个知识点"在版面上成为一个可收起的卡片 ---- */
+  .secbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:16px 0 8px;
+    padding:9px 13px; background:var(--panel); border:1px dashed var(--line); border-radius:10px;}
+  .secbar button{border:1px solid var(--line); background:#fff; color:var(--accent); padding:5px 13px;
+    border-radius:16px; cursor:pointer; font-size:12.5px; font-family:inherit;}
+  .secbar button:hover{background:#e0e7ff;}
+  .secbar .hint{font-size:12.5px; color:var(--muted); margin-left:auto;}
+  .sec{background:#fff; border:1px solid var(--line); border-radius:12px; margin:14px 0;
+    padding:0 14px 2px; box-shadow:0 1px 3px rgba(15,23,42,.035); transition:box-shadow .2s, border-color .2s;}
+  .sec:hover{border-color:#cbd5e1;}
+  .sechdr{cursor:pointer; padding:9px 4px 9px; border-radius:10px; user-select:none;}
+  .sechdr:hover{background:#f8fafc;}
+  .sechdr h2{margin:0; cursor:pointer;}
+  .caret{margin-left:auto; color:var(--accent); font-size:15px; line-height:1;}
+  .sec-sub{font-size:12.5px; color:var(--muted); padding:3px 0 2px 17px; line-height:1.7;}
+  .sec-sub:empty{display:none;}
+  .secbody{overflow:hidden; transition:max-height .32s ease;}
+  .sec:not(.sec-open) .secbody{max-height:0 !important;}
+  .sec:not(.sec-open){box-shadow:none;}
+  /* 二级折叠：secbody 里的 h3 子卡片（默认展开；.sec:not(.sec-open) 的规则自动级联到子卡） */
+  .sec.sub{margin:14px 0 16px; padding:0 12px 2px; background:#fcfdff;}
+  .sechdr h3{margin:0; cursor:pointer; display:flex; align-items:center; gap:10px;}
+  /* 折叠答案 */
+  .revealbtn{border:1.5px solid var(--accent); background:#fff; color:var(--accent); padding:8px 20px;
+    border-radius:20px; cursor:pointer; font-size:13.5px; font-family:inherit; margin:10px 0 6px;
+    transition:background .2s, color .2s, transform .15s, box-shadow .2s;}
+  .revealbtn:hover{background:var(--accent); color:#fff; transform:translateY(-1px); box-shadow:0 2px 8px rgba(37,99,235,.25);}
+  .revealwrap{max-height:0; overflow:hidden; opacity:0; transform:translateY(10px);
+    transition:max-height .55s ease, opacity .45s ease .08s, transform .45s ease .08s;}
+  .revealwrap.open{opacity:1; transform:none;}
+  .revealbtn:focus-visible{outline:3px solid #93c5fd; outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{scroll-behavior:auto !important; transition-duration:.01ms !important; animation-duration:.01ms !important;}
+  }
+  .tabpage{display:none;}
+  .tabpage.show{display:block; animation:fadein .25s;}
+  @keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+  a{color:var(--accent); text-decoration:none; border-bottom:1px dashed #93c5fd; cursor:pointer;}
+  /* ---- 左侧大纲导航栏（outline sidebar）：把「板块 → 小节 → 子节 / 题目」三级目录常驻左边 ---- */
+  .app{display:flex; align-items:flex-start;}
+  .main{flex:1 1 auto; min-width:0;}
+  .side{flex:0 0 322px; width:322px; position:sticky; top:0; height:100vh; overflow-y:auto;
+    background:#fbfdff; border-right:1px solid var(--line); padding:18px 14px 56px;}
+  .side::-webkit-scrollbar{width:9px;}
+  .side::-webkit-scrollbar-thumb{background:#dbe3ee; border-radius:5px;}
+  .side-title{font-weight:700; color:var(--accent); font-size:15px; padding:2px 10px 10px;
+    display:flex; align-items:center; gap:7px;}
+  .side-tools{display:flex; gap:8px; padding:0 10px 12px; border-bottom:1px dashed var(--line); margin-bottom:10px;}
+  .side-tools button{border:1px solid var(--line); background:#fff; color:var(--muted); padding:4px 12px;
+    border-radius:13px; cursor:pointer; font-size:12.5px; font-family:inherit;}
+  .side-tools button:hover{background:var(--panel); color:var(--accent);}
+  .sn-g{margin:3px 0;}
+  .sn-row{display:flex; align-items:flex-start; gap:2px; border-radius:8px;}
+  .sn-tw{flex:0 0 22px; width:22px; padding:5px 0; border:none; background:transparent; cursor:pointer;
+    color:var(--muted); font-size:12.5px; line-height:1.5; font-family:inherit;}
+  .sn-tw:hover{color:var(--accent);}
+  .sn-sp{flex:0 0 22px; width:22px;}
+  .sn-nav{flex:1 1 auto; display:block; text-align:left; border:none; background:transparent; cursor:pointer;
+    font-family:inherit; color:var(--ink); font-size:13.5px; line-height:1.7; padding:5px 9px;
+    border-radius:8px; overflow:hidden;}
+  .sn-nav:hover{background:#eef2ff; color:var(--accent);}
+  .sn-lv0 .sn-nav{font-weight:700; color:var(--accent); font-size:14.5px; padding:6px 9px;}
+  .sn-g.is-cur > .sn-row > .sn-nav{background:#e0e7ff;}
+  .sn-nav.active{background:var(--accent); color:#fff;}
+  .sn-children{overflow:hidden; transition:max-height .28s ease;}
+  .sn-lv2{padding-left:22px;}
+  .sn-lv3{padding-left:46px; color:var(--muted); font-size:13px;}
+  .sn-nav.sn-lv3.active{color:#fff;}
+  .side-toggle{display:none; border:1px solid var(--line); background:#fff; color:var(--accent);
+    padding:5px 11px; border-radius:8px; cursor:pointer; font-size:13px; font-family:inherit;}
+  .side-toggle:hover{background:var(--panel);}
+  .side-backdrop{display:none;}
+  @media (max-width:1200px){
+    .app{display:block;}
+    .side{position:fixed; top:0; left:0; bottom:0; height:auto; z-index:90; width:332px; flex:none;
+      transform:translateX(-103%); transition:transform .26s ease; box-shadow:2px 0 18px rgba(15,23,42,.16);}
+    .side.open{transform:none;}
+    .side-toggle{display:inline-flex;}
+    .side-backdrop{display:block; position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(15,23,42,.34); z-index:85; opacity:0; pointer-events:none; transition:opacity .26s;}
+    .side-backdrop.show{opacity:1; pointer-events:auto;}
+  }
+  @media (min-width:1201px){ body.side-hidden .side{display:none;} }
+
+  /* ===== v4.0 语义组件与渐进披露（与既有 .q/.ans/.exp/.tr/.chk/.eq 并存，两者都受支持）=====
+     映射：.q＝.practice  ·  .ans/.exp＝details.answer  ·  .tr＝.translation  ·  .chk＝.check  ·  .eq＝.formula
+     新写内容优先用右侧这套（原生 details，键盘可访问、状态明确）。 */
+  .concept{border-left:3px solid var(--accent); background:var(--panel);
+    border-radius:10px; padding:10px 14px; margin:10px 0;}
+  .formula{background:var(--codebg); border:1px solid var(--line);
+    border-radius:10px; padding:10px 14px; margin:10px 0; overflow-x:auto;}
+  .translation{background:#fff; border:1px dashed var(--accent2); border-radius:10px;
+    padding:9px 13px; margin:8px 0; font-size:14.5px; line-height:1.75;}
+  .recall{background:var(--panel); border-left:3px solid var(--purple); border-radius:8px;
+    padding:8px 12px; margin:8px 0; font-size:14px; color:var(--muted);}
+  .recall b, .recall strong{color:var(--ink);}
+  .recall a{color:var(--accent); text-decoration:none; border-bottom:1px dotted var(--accent);}
+  details.bridge, details.deep{margin:10px 0; border:1px solid var(--line); border-radius:10px;
+    background:#fff; overflow:hidden;}
+  details.bridge>summary, details.deep>summary, details.answer>summary{cursor:pointer;
+    padding:9px 14px; font-weight:600; font-size:14.5px; list-style:none;
+    display:flex; align-items:center; gap:8px; user-select:none;}
+  details.bridge>summary::-webkit-details-marker, details.deep>summary::-webkit-details-marker,
+  details.answer>summary::-webkit-details-marker{display:none;}
+  details.bridge>summary::before{content:'\1F517  ';}
+  details.deep>summary::before{content:'\1F50D  ';}
+  details.answer>summary::before{content:'\2705  ';}
+  details.bridge>summary::after, details.deep>summary::after, details.answer>summary::after{
+    content:'\25BE'; margin-left:auto; transition:transform .2s;}
+  details.bridge[open]>summary::after, details.deep[open]>summary::after,
+  details.answer[open]>summary::after{transform:rotate(180deg);}
+  details.bridge>.detail-body, details.deep>.detail-body, details.answer>.detail-body{
+    padding:10px 14px 12px; border-top:1px solid var(--line);}
+  .practice{border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:12px 0; background:#fff;}
+  .practice-title{font-weight:700; font-size:15.5px; margin-bottom:4px;}
+  .practice-meta{font-size:13px; color:var(--muted); margin-bottom:8px;}
+  .check{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin:10px 0;}
+  .summary-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin:12px 0;}
+  .summary-card{border:1px solid var(--line); border-radius:12px; padding:12px 14px; background:#fff;}
+  .summary-title{font-weight:700; margin-bottom:6px;}
+  /* 键盘可访问性：所有可交互元素必须有可见焦点环 */
+  .tabbtn:focus-visible, .side-toggle:focus-visible, .revealbtn:focus-visible,
+  .sn-row:focus-visible, summary:focus-visible, a:focus-visible{
+    outline:2px solid var(--accent); outline-offset:2px; border-radius:6px;}
+</style>
+</head>
+<body>
+
+<div class="side-backdrop" id="sideBackdrop"></div>
+<div class="app">
+<aside class="side" id="side">
+  <div class="side-title">📑 目录大纲</div>
+  <div class="side-tools">
+    <button type="button" id="snExpandAll">⊞ 展开</button>
+    <button type="button" id="snCollapseAll">⊟ 收起</button>
+  </div>
+  <nav class="side-nav" id="sideNav"></nav>
+</aside>
+<div class="main">
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <button class="side-toggle" id="sideToggle" type="button" aria-label="展开或收起目录大纲">☰ 目录</button>
+    <span class="brand">【课程代号】·【单元】</span>
+    <nav class="tabs">
+      <button class="tabbtn" data-t="home"   id="btn-home">🏠 总览</button>
+      <button class="tabbtn" data-t="topic1" id="btn-topic1">① 板块一</button>
+      <button class="tabbtn" data-t="topic2" id="btn-topic2">② 板块二</button>
+      <button class="tabbtn" data-t="examples" id="btn-examples">📚 例题</button>
+      <button class="tabbtn" data-t="practice"   id="btn-practice">📝 训练</button>
+      <button class="tabbtn" data-t="summary" id="btn-summary">🧾 总结</button>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ============ 总览：只做定位、目标和学习路径 ============ -->
+<div class="tabpage" id="page-home">
+<h1>【课程 / 单元名】 · 从零开始</h1>
+<p class="sub">依据当前可见课程材料整理 · 当前材料可能仍会继续补充 · 第一次学习请按知识依赖顺序阅读</p>
+
+<div class="intro">
+<div class="ih">🧠 这部分到底要解决什么？</div>
+<p>【从课程真正研究的问题、对象、现象或任务开场。不要强求生活比喻；有合适直觉再用。】</p>
+<div class="iq">🎯 <b>学完后你应该能：</b>【列 3–5 个能力目标，而不是只列知识名词】</div>
+</div>
+
+<h2>学习路径</h2>
+<ol>
+<li>【知识板块一：先解决什么】</li>
+<li>【知识板块二：为什么必须接在前面之后】</li>
+<li>📚 例题：看已学方法如何落地</li>
+<li>📝 训练：暴露“以为会了”的地方</li>
+<li>🧾 总结：学完后用于复习与查找</li>
+</ol>
+
+<div class="note">📌 <b>资料状态：</b>【可选。若当前材料明显不完整，可简短说明“当前按已有资料组织，后续材料到来会增量更新”；不要把内部状态表全部展示给学生。】</div>
+
+<div class="pager"><button onclick="goto('topic1')">下一页：知识板块一 →</button></div>
+</div>
+
+<!-- ============ 知识板块一：正式教学地址示范 ============ -->
+<div class="tabpage" id="page-topic1">
+<h1>知识板块一 · 【用读者问题命名】</h1>
+<p class="sub">【一句话说明这一板块为什么必须先学】</p>
+
+<div class="intro">
+<div class="ih">🧠 零基础导读：【当前问题】</div>
+<p>【先说明对象/问题/现象，再逐步引入形式化语言。】</p>
+<div class="iq">❓ <b>这一页回答：</b>①【问题 A】 ②【问题 B】 ③【问题 C】</div>
+</div>
+
+<div class="chips"><span style="font-size:12.5px;color:var(--muted);align-self:center;">本节地图：</span>
+<button onclick="gotoText('为什么需要这个量')">为什么需要</button>
+<button onclick="gotoText('公式从哪里来')">公式来路</button>
+<button onclick="gotoText('第一次应用')">第一次应用</button>
+</div>
+
+<h2>为什么需要这个量 / 方法？</h2>
+<div class="concept"><b>概念：</b>【名称、读法、含义、单位/量纲、角色】</div>
+<p>【说明如果没有它，会有什么描述或求解困难。】</p>
+
+<h2>公式从哪里来？</h2>
+<p>【先说明它是定义、基本定律、本构、推导、经验关系还是近似。】</p>
+<div class="formula">\(【公式】\)</div>
+<div class="translation"><b>人话翻译：</b>【逐项解释，并说明条件与边界。】</div>
+<h3>关键一步为什么成立？</h3>
+<p>【只展开真正阻断理解的推导步骤。】</p>
+
+<div class="check"><b>🧩 小检查（可选）：</b>【1–3 个高价值问题；若只是复述正文可删掉。】</div>
+
+<h2>第一次应用</h2>
+<div class="practice">
+<div class="practice-title">Guided Practice · 【题目名】</div>
+<div class="practice-meta">能力：识别 + 第一次使用【方法】</div>
+<p>【题目。可给很轻的第一步提示，但不要把核心判断直接说完。】</p>
+<details class="answer"><summary>查看答案与讲解</summary><div class="detail-body">
+<p>【分步答案 + 为什么这么做 + 如何检查结果】</p>
+</div></details>
+</div>
+
+<div class="pager"><button onclick="goto('home')">← 总览</button><button onclick="goto('topic2')">下一页：知识板块二 →</button></div>
+</div>
+
+<!-- ============ 知识板块二：局部唤醒组件示范 ============ -->
+<div class="tabpage" id="page-topic2">
+<h1>知识板块二 · 【下一个读者问题】</h1>
+<p class="sub">【说明它依赖上一板块的哪部分】</p>
+
+<h2>把旧知识接到新问题上</h2>
+<div class="recall"><b>短提醒：</b>【只回忆真正需要的一句话/一个式子】 →
+<a href="#" onclick="gotoText('为什么需要这个量');return false;">回到正式教学地址</a></div>
+<p>【继续新知识的正式教学。】</p>
+
+<h2>什么时候需要局部知识桥？</h2>
+<p>如果某个技巧只服务当前题/当前情境，可放 bridge；若之后会反复使用，就应升格到正式教学。</p>
+<details class="bridge"><summary>本情境需要的局部知识桥</summary><div class="detail-body">
+【局部技巧。不能在这里第一次藏一个后续反复使用的核心方法。】
+</div></details>
+
+<details class="deep"><summary>深入理解：第二种方法 / 完整证明</summary><div class="detail-body">
+【非主线但有价值的内容；必需先修不得藏在这里。】
+</div></details>
+
+<h2>迁移练习</h2>
+<div class="practice">
+<div class="practice-title">Transfer Practice · 【题目名】</div>
+<div class="practice-meta">不直接提示方法；要求自己识别使用哪条路线</div>
+<p>【题目】</p>
+<details class="answer"><summary>查看答案与讲解</summary><div class="detail-body">【答案 + 决策理由】</div></details>
+</div>
+
+<div class="pager"><button onclick="goto('topic1')">← 上一页</button><button onclick="goto('examples')">下一页：例题 →</button></div>
+</div>
+
+<!-- ============ 例题：来自当前课程材料的代表性任务 ============ -->
+<div class="tabpage" id="page-examples">
+<h1>📚 例题</h1>
+<p class="sub">用于观察课程材料中的代表性解题动作。例题答案也必须通过 Solution-backward Audit。</p>
+<h2>例题一 · 【来源 / 能力】</h2>
+<div class="practice">
+<div class="practice-title">【原题或忠实改编题】</div>
+<p>【题目】</p>
+<details class="answer"><summary>查看答案与讲解</summary><div class="detail-body">【答案】</div></details>
+</div>
+<div class="pager"><button onclick="goto('topic2')">← 知识板块</button><button onclick="goto('practice')">下一页：训练 →</button></div>
+</div>
+
+<!-- ============ 训练：不靠题前教学掩盖缺口 ============ -->
+<div class="tabpage" id="page-practice">
+<h1>📝 训练</h1>
+<p class="sub">Transfer / Exam Practice。若答案需要正文从未教过的方法，应回修正文，而不是在题前临时补课。</p>
+<h2>综合训练</h2>
+<div class="practice">
+<div class="practice-title">Exam Practice · 【题目】</div>
+<p>【尽量模拟真实考核，不泄露方法标签。】</p>
+<details class="answer"><summary>查看答案与讲解</summary><div class="detail-body">【答案】</div></details>
+</div>
+<div class="pager"><button onclick="goto('examples')">← 例题</button><button onclick="goto('summary')">下一页：总结 →</button></div>
+</div>
+
+<!-- ============ 总结：复习层唯一入口，不首次教学 ============ -->
+<div class="tabpage" id="page-summary">
+<h1>🧾 总结 · 【课程 / 单元名】</h1>
+<p class="sub">第一次学习不要从这里开始。这里只压缩已经讲过的内容。</p>
+
+<h2>主线复述</h2>
+<div class="steps"><ol>
+<li>【第一步：核心问题】</li>
+<li>【第二步：关键关系】</li>
+<li>【第三步：典型决策】</li>
+</ol></div>
+
+<h2>符号与单位</h2>
+<table><tr><th>符号</th><th>含义</th><th>单位/量纲</th><th>角色</th></tr>
+<tr><td>…</td><td>…</td><td>…</td><td>给定 / 未知 / 定义 / 推导 / 实测…</td></tr></table>
+
+<h2>易错对照</h2>
+<table><tr><th>陷阱</th><th>为什么错</th><th>正确动作</th></tr><tr><td>…</td><td>…</td><td>…</td></tr></table>
+
+<h2>速查 / 决策树</h2>
+<div class="summary-grid">
+<div class="summary-card"><div class="summary-title">看到【特征】</div>→ 先做【动作】 → 检查【条件】</div>
+<div class="summary-card"><div class="summary-title">看到【另一特征】</div>→ 走【另一条路线】</div>
+</div>
+
+<div class="pager"><button onclick="goto('home')">← 回到总览</button></div>
+</div>
+
+</div><!-- /wrap -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+  var TABS = ["home","topic1","topic2","examples","practice","summary"];
+  function goto(id){
+    TABS.forEach(function(t){
+      document.getElementById("page-"+t).classList.toggle("show", t===id);
+      document.getElementById("btn-"+t).classList.toggle("active", t===id);
+    });
+    history.replaceState(null, "", "#t="+id);
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+  document.querySelectorAll(".tabbtn").forEach(function(b){
+    b.addEventListener("click", function(){ goto(b.dataset.t); });
+  });
+  function gotoGroup(id){
+    var el = document.getElementById(id);
+    if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+  }
+  /* 按标题/加粗小标题文字跨页跳转（索引表与本节地图的通用导航） */
+  function gotoText(key){
+    var found = null, isHead = false, i;
+    var nodes = document.querySelectorAll(".tabpage h2, .tabpage h3, .tabpage h4");
+    for(i=0;i<nodes.length && !found;i++){
+      if(nodes[i].textContent.indexOf(key) >= 0){ found = nodes[i]; isHead = true; }
+    }
+    if(!found){
+      var bs = document.querySelectorAll(".tabpage b");
+      for(i=0;i<bs.length && !found;i++){
+        if(bs[i].textContent.indexOf(key) >= 0){ found = bs[i]; isHead = false; }
+      }
+    }
+    if(!found) return false;
+    var pg = found.closest(".tabpage");
+    var sameTab = !!(pg && pg.classList.contains("show"));
+    if(pg && pg.id && pg.id.indexOf("page-") === 0){ goto(pg.id.slice(5)); }
+    var target = found, block = isHead ? "start" : "center";
+    function jump(){ target.scrollIntoView({behavior: sameTab ? "smooth" : "auto", block: block}); }
+    if(sameTab){ jump(); } else { setTimeout(jump, 260); setTimeout(jump, 750); }
+    return true;
+  }
+  /* 答案默认折叠：自动把每个 .q 里的 .ans/.exp 包进 .revealwrap 并插入按钮 */
+  function wireReveal(btn){
+    btn.addEventListener("click", function(){
+      var w = btn.nextElementSibling;
+      if(!w || !w.classList.contains("revealwrap")) return;
+      var open = w.classList.toggle("open");
+      btn.setAttribute("aria-expanded", String(open));
+      if(open){
+        w.style.maxHeight = (w.scrollHeight + 80) + "px";
+        clearTimeout(w._relax);   /* 关键：动画后解除高度上限，防止 MathJax 迟到排版被裁切 */
+        w._relax = setTimeout(function(){ if(w.classList.contains("open")) w.style.maxHeight = "none"; }, 700);
+        btn.textContent = "🙈 收起答案";
+      } else {
+        clearTimeout(w._relax);
+        if(w.style.maxHeight === "none"){ w.style.maxHeight = w.scrollHeight + "px"; void w.offsetHeight; }
+        w.style.maxHeight = "0px";
+        btn.textContent = btn.getAttribute("data-show") || "👁 查看答案与讲解";
+      }
+    });
+  }
+  document.querySelectorAll(".tabpage .q").forEach(function(q){
+    var items = q.querySelectorAll(".ans, .exp");
+    if(!items.length) return;
+    var wrap = document.createElement("div");
+    wrap.className = "revealwrap";
+    var wrapId = "reveal-" + (document.querySelectorAll(".revealwrap").length + 1);
+    wrap.id = wrapId;
+    items[0].parentNode.insertBefore(wrap, items[0]);
+    items.forEach(function(el){ wrap.appendChild(el); });
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "revealbtn";
+    btn.textContent = "👁 查看答案与讲解";
+    btn.setAttribute("aria-expanded", "false");
+    btn.setAttribute("aria-controls", wrapId);
+    wrap.parentNode.insertBefore(btn, wrap);
+    wireReveal(btn);
+  });
+  document.querySelectorAll("button.revealbtn[data-manual]").forEach(wireReveal);
+  window.addEventListener("hashchange", function(){
+    var m = location.hash.match(/^#t=(\w+)$/);
+    if(m && TABS.indexOf(m[1])>=0) goto(m[1]);
+  });
+  (function(){
+    var m = location.hash.match(/^#t=(\w+)$/);
+    var id = (m && TABS.indexOf(m[1])>=0) ? m[1] : "home";
+    TABS.forEach(function(t){
+      document.getElementById("page-"+t).classList.toggle("show", t===id);
+      document.getElementById("btn-"+t).classList.toggle("active", t===id);
+    });
+  })();
+</script>
+<script>
+/* ---- 板块折叠（accordion）：每个 h2 = 一个可收起的"知识点卡片"，头部带"这一节要解决什么"摘要 ----
+   设计要点：
+   1) 只在 .tabpage 的直接子元素层面操作（h2 → 新卡片），保证不破坏任何已有嵌套；
+   2) 展开/收起沿用"maxHeight → none"的成熟方案（防止 MathJax 迟到排版被裁）；
+   3) 摘要取该板块第一段 .tr（"🎯 这一节要解决什么"），收起后页面变成带摘要的目录；
+   4) .pager 始终留在外面，收起板块不影响翻页；
+   5) gotoGroup/gotoText 通过 window.openAncestors 自动展开目标所在的收起板块；
+   6) 二级折叠：secbody 里直接子级的 h3 再包成 .sec.sub 子卡片（默认展开），让长板块内部也能按小节收起，
+      openAncestors 沿祖先链逐级展开，嵌套折叠无需额外代码。 */
+(function(){
+  function openAncestors(el){
+    var n = el;
+    while(n && n.nodeType === 1){
+      if(n.classList){
+        /* 情形 1：目标在板块内容里 → 展开所在 secbody */
+        if(n.classList.contains("secbody") && n.style.maxHeight === "0px"){
+          n.style.maxHeight = "none";
+          if(n.parentNode) n.parentNode.classList.add("sec-open");
+          var c1 = n.parentNode ? n.parentNode.querySelector(".caret") : null;
+          if(c1) c1.textContent = "▾";
+        }
+        /* 情形 2：目标本身就是板块标题（h2 在 sechdr 里）→ 展开它的 secbody */
+        if(n.classList.contains("sec")){
+          var kids = n.children, k;
+          for(k = 0; k < kids.length; k++){
+            if(kids[k].classList.contains("secbody") && kids[k].style.maxHeight === "0px"){
+              kids[k].style.maxHeight = "none";
+              n.classList.add("sec-open");
+              var c2 = n.querySelector(".caret");
+              if(c2) c2.textContent = "▾";
+            }
+          }
+        }
+      }
+      n = n.parentNode;
+    }
+  }
+  window.openAncestors = openAncestors;
+
+  function makeToggle(s){
+    return function(e){
+      if(e && e.target && e.target.closest && e.target.closest("a")) return;  /* 标题里的链接照常跳转 */
+      var open = s.sec.classList.toggle("sec-open");
+      if(open){
+        s.body.style.maxHeight = (s.body.scrollHeight + 40) + "px";
+        clearTimeout(s.body._relax);
+        s.body._relax = setTimeout(function(){
+          if(s.sec.classList.contains("sec-open")) s.body.style.maxHeight = "none";
+        }, 380);
+      } else {
+        clearTimeout(s.body._relax);
+        if(s.body.style.maxHeight === "none"){
+          s.body.style.maxHeight = s.body.scrollHeight + "px";
+          void s.body.offsetHeight;
+        }
+        s.body.style.maxHeight = "0px";
+      }
+      if(s.caret) s.caret.textContent = open ? "▾" : "▸";
+    };
+  }
+
+  document.querySelectorAll(".tabpage").forEach(function(pg){
+    var sections = [];
+    var kids = Array.prototype.slice.call(pg.children);
+    var cur = null;
+    kids.forEach(function(el){
+      if(el.tagName === "H2"){
+        var sec = document.createElement("div");
+        sec.className = "sec sec-open";
+        pg.insertBefore(sec, el);
+        var hdr = document.createElement("div");
+        hdr.className = "sechdr";
+        sec.appendChild(hdr);
+        hdr.appendChild(el);
+        var caret = document.createElement("span");
+        caret.className = "caret";
+        caret.textContent = "▾";
+        el.appendChild(caret);
+        var body = document.createElement("div");
+        body.className = "secbody";
+        body.style.maxHeight = "none";
+        sec.appendChild(body);
+        var s = {sec:sec, body:body, caret:caret, hdr:hdr};
+        sections.push(s);
+        cur = body;
+        hdr.addEventListener("click", makeToggle(s));
+      } else if(cur){
+        if(el.classList && el.classList.contains("pager")) return;  /* 翻页条始终可见 */
+        cur.appendChild(el);
+      }
+    });
+    /* 二级折叠：secbody 里直接子级的 h3 → 可收起的子卡片（默认展开，不打断阅读顺序；
+       复用 .sec/.sechdr/.secbody 与 openAncestors，嵌套折叠天然生效） */
+    var subsecs = [];
+    sections.forEach(function(s){
+      var cur = null;
+      Array.prototype.slice.call(s.body.children).forEach(function(el){
+        if(el.tagName === "H3"){
+          var sub = document.createElement("div");
+          sub.className = "sec sub sec-open";
+          s.body.insertBefore(sub, el);
+          var hdr = document.createElement("div");
+          hdr.className = "sechdr";
+          sub.appendChild(hdr);
+          hdr.appendChild(el);
+          var caret2 = document.createElement("span");
+          caret2.className = "caret";
+          caret2.textContent = "▾";
+          el.appendChild(caret2);
+          var sb = document.createElement("div");
+          sb.className = "secbody";
+          sb.style.maxHeight = "none";
+          sub.appendChild(sb);
+          cur = {sec:sub, hdr:hdr, body:sb};
+          subsecs.push(cur);
+          hdr.addEventListener("click", makeToggle(cur));
+        } else if(el.classList && (el.classList.contains("chk") || el.classList.contains("check"))){
+          /* 自检属于整个 h2 小节，不属于上一个子话题：
+             把 cur 清空，自检及其后的元素留在节级，不会被上一个 h3 子卡片吞掉 */
+          cur = null;
+        } else if(cur){
+          cur.body.appendChild(el);
+        }
+      });
+    });
+    /* 摘要行 */
+    sections.forEach(function(s){
+      var tr = s.body.querySelector(".tr");
+      if(!tr) return;
+      var t = tr.textContent.replace(/\s+/g, " ").trim();
+      if(t.length > 84) t = t.slice(0, 84) + "…";
+      var sub = document.createElement("div");
+      sub.className = "sec-sub";
+      sub.textContent = t;
+      s.hdr.appendChild(sub);
+    });
+    if(!sections.length) return;
+    /* 工具栏 */
+    var bar = document.createElement("div");
+    bar.className = "secbar";
+    var b1 = document.createElement("button");
+    b1.textContent = "⊞ 全部展开";
+    var b2 = document.createElement("button");
+    b2.textContent = "⊟ 全部收起";
+    var hint = document.createElement("span");
+    hint.className = "hint";
+    hint.textContent = "点击板块标题即可收起 / 展开（本页共 " + sections.length + " 个板块）";
+    b1.addEventListener("click", function(){
+      sections.forEach(function(s){ if(!s.sec.classList.contains("sec-open")) s.hdr.click(); });
+      subsecs.forEach(function(s){ if(!s.sec.classList.contains("sec-open")) s.hdr.click(); });
+    });
+    b2.addEventListener("click", function(){
+      subsecs.forEach(function(s){ if(s.sec.classList.contains("sec-open")) s.hdr.click(); });
+      sections.forEach(function(s){ if(s.sec.classList.contains("sec-open")) s.hdr.click(); });
+    });
+    bar.appendChild(b1); bar.appendChild(b2); bar.appendChild(hint);
+    pg.insertBefore(bar, sections[0].sec);
+  });
+})();
+</script>
+<script>
+/* ---- 左侧大纲导航栏（outline sidebar）----
+   结构：板块(tab) → 小节(h2) → 子节(h3) / 题目(.qt/.practice-title)，三级自动生成、逐级可展开折叠。
+   1) 目录完全从 DOM 采集：以后新增 h2/h3/题目，目录自动出现，无需手工维护。
+   2) 点击条目 → 切换板块 → 自动展开被收起的小节卡（openAncestors）→ 滚动定位。
+   3) 滚动时高亮当前小节（scroll spy），并让它所在目录分支保持展开、自身滚动可见。
+   4) 窄屏（≤1200px）自动变抽屉：顶栏「☰ 目录」开合 + 点遮罩关闭。
+   实现约束：只用 createElement 建节点（不在 JS 里写标签字符串），以免干扰
+   scripts/check_page.js 的标签配对统计；key 命名：组 "g0"、条目 "g0_2"、三级 "g0_2_1"。 */
+(function(){
+  var side = document.getElementById("side");
+  var nav  = document.getElementById("sideNav");
+  if(!side || !nav) return;
+  var TABS = window.TABS || [];
+
+  function mk(tag, cls, text){
+    var e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(text != null) e.textContent = text;
+    return e;
+  }
+  function mkBtn(cls, text){ var b = mk("button", cls, text); b.type = "button"; return b; }
+  function clean(el){
+    var t = (el.textContent || "").replace(/\s+/g, " ").trim();
+    var i = t.indexOf("🔗"); if(i >= 0) t = t.slice(0, i).trim();   /* 题目行里的「🔗 关联」不进展目录 */
+    t = t.replace(/[▸▾⊞⊟]/g, "").trim();
+    if(t.length > 46) t = t.slice(0, 46) + "…";
+    return t;
+  }
+
+  /* ① 采集：每个板块 → h2（小节）→ h3 / .qt / .practice-title（子项） */
+  var groups = [];
+  TABS.forEach(function(tb){
+    var pg = document.getElementById("page-" + tb);
+    if(!pg) return;
+    var tbBtn = document.getElementById("btn-" + tb);
+    var items = [], cur = null;
+    Array.prototype.forEach.call(pg.querySelectorAll("h2, h3, .qt, .practice-title"), function(h){
+      var lb = clean(h); if(!lb) return;
+      if(h.tagName === "H2"){ cur = {el:h, label:lb, kids:[]}; items.push(cur); }
+      else if(cur){ cur.kids.push({el:h, label:lb}); }
+      else { items.push({el:h, label:lb, kids:[]}); }
+    });
+    if(items.length) groups.push({
+      tab: tb,
+      label: tbBtn ? tbBtn.textContent.replace(/\s+/g, " ").trim() : tb,
+      items: items
+    });
+  });
+  if(!groups.length) return;
+
+  /* ② 生成目录树 */
+  var mapEl = {}, mapBox = {}, mapTw = {}, mapGrp = {}, order = [];
+
+  groups.forEach(function(g, gi){
+    var gk = "g" + gi;
+    var card = mk("div", "sn-g"); card.setAttribute("data-g", String(gi)); mapGrp[gk] = card;
+    var row = mk("div", "sn-row sn-lv0");
+    var tw = mkBtn("sn-tw", "▸");
+    tw.setAttribute("aria-expanded", "false"); tw.setAttribute("data-k", gk);
+    var nb = mkBtn("sn-nav", g.label); nb.setAttribute("data-tab", g.tab);
+    row.appendChild(tw); row.appendChild(nb); card.appendChild(row);
+
+    var box = mk("div", "sn-children");
+    box.style.maxHeight = "0px"; box.setAttribute("data-k", gk);
+    mapBox[gk] = box; mapTw[gk] = tw;
+
+    g.items.forEach(function(it, ii){
+      var ik = gk + "_" + ii;
+      var r = mk("div", "sn-row sn-lv2");
+      if(it.kids.length){
+        var kk = "i" + ik;
+        var tw2 = mkBtn("sn-tw", "▸");
+        tw2.setAttribute("aria-expanded", "false"); tw2.setAttribute("data-k", kk);
+        mapTw[kk] = tw2; r.appendChild(tw2);
+      } else {
+        r.appendChild(mk("span", "sn-sp", ""));
+      }
+      var nb2 = mkBtn("sn-nav", it.label); nb2.setAttribute("data-el", ik);
+      r.appendChild(nb2); box.appendChild(r);
+      mapEl[ik] = it.el; order.push({node: nb2, el: it.el});
+
+      if(it.kids.length){
+        var kk2 = "i" + ik;
+        var kb = mk("div", "sn-children");
+        kb.style.maxHeight = "0px"; kb.setAttribute("data-k", kk2);
+        mapBox[kk2] = kb;
+        it.kids.forEach(function(k, ki){
+          var kid = ik + "_" + ki;
+          var b3 = mkBtn("sn-nav sn-lv3", k.label); b3.setAttribute("data-el", kid);
+          kb.appendChild(b3);
+          mapEl[kid] = k.el; order.push({node: b3, el: k.el});
+        });
+        box.appendChild(kb);
+      }
+    });
+    card.appendChild(box);
+    nav.appendChild(card);
+  });
+
+  /* ③ 展开 / 折叠（沿用 maxHeight → none：动画后解除上限，避免迟到排版被裁） */
+  function setOpen(tw, box, open){
+    if(!box) return;
+    if(open){
+      box.style.maxHeight = (box.scrollHeight + 60) + "px";
+      clearTimeout(box._t);
+      box._t = setTimeout(function(){ box.style.maxHeight = "none"; }, 320);
+    } else {
+      clearTimeout(box._t);
+      if(box.style.maxHeight === "none"){ box.style.maxHeight = box.scrollHeight + "px"; void box.offsetHeight; }
+      box.style.maxHeight = "0px";
+    }
+    if(tw){ tw.textContent = open ? "▾" : "▸"; tw.setAttribute("aria-expanded", String(open)); }
+  }
+  Array.prototype.forEach.call(nav.querySelectorAll(".sn-tw"), function(tw){
+    var box = mapBox[tw.getAttribute("data-k")];
+    if(!box) return;
+    tw.addEventListener("click", function(e){
+      e.stopPropagation();
+      setOpen(tw, box, tw.getAttribute("aria-expanded") !== "true");
+    });
+  });
+  function groupOfTab(tab){
+    for(var i = 0; i < groups.length; i++){ if(groups[i].tab === tab) return "g" + i; }
+    return null;
+  }
+  function ensureGroup(tab, open){
+    var gk = groupOfTab(tab); if(!gk) return;
+    var tw = mapTw[gk], box = mapBox[gk];
+    if(tw && box && (tw.getAttribute("aria-expanded") === "true") !== open) setOpen(tw, box, open);
+  }
+  var ea = document.getElementById("snExpandAll"), ca = document.getElementById("snCollapseAll");
+  if(ea) ea.addEventListener("click", function(){
+    Object.keys(mapBox).forEach(function(k){
+      var tw = mapTw[k]; if(tw && tw.getAttribute("aria-expanded") !== "true") setOpen(tw, mapBox[k], true);
+    });
+  });
+  if(ca) ca.addEventListener("click", function(){
+    Object.keys(mapBox).reverse().forEach(function(k){
+      var tw = mapTw[k]; if(tw && tw.getAttribute("aria-expanded") === "true") setOpen(tw, mapBox[k], false);
+    });
+  });
+
+  /* ④ 跳转：切板块 → 展开被收起的小节卡 → 定位 */
+  function nowTab(){
+    var pg = document.querySelector(".tabpage.show");
+    return (pg && pg.id && pg.id.indexOf("page-") === 0) ? pg.id.slice(5) : null;
+  }
+  function jumpTo(el){
+    var pg = el.closest ? el.closest(".tabpage") : null;
+    var same = !!(pg && pg.classList.contains("show"));
+    if(pg && pg.id && pg.id.indexOf("page-") === 0) goto(pg.id.slice(5));
+    if(window.openAncestors) window.openAncestors(el);
+    var block = (el.tagName === "H2" || el.tagName === "H3") ? "start" : "center";
+    function jump(){ el.scrollIntoView({behavior: same ? "smooth" : "auto", block: block}); }
+    if(same){ jump(); setTimeout(jump, 340); }
+    else { setTimeout(jump, 280); setTimeout(jump, 820); }
+  }
+  nav.addEventListener("click", function(e){
+    var b = e.target.closest ? e.target.closest(".sn-nav") : null;
+    if(!b) return;
+    var tab = b.getAttribute("data-tab");
+    if(tab){
+      goto(tab); ensureGroup(tab, true);
+      setTimeout(function(){ spy(true); }, 320);
+      setTimeout(function(){ spy(true); }, 900);
+      if(isMobile()) closeDrawer();
+      return;
+    }
+    var el = mapEl[b.getAttribute("data-el")];
+    if(!el) return;
+    jumpTo(el);
+    if(isMobile()) closeDrawer();
+    setTimeout(function(){ spy(true); }, 400);
+  });
+
+  /* ⑤ 滚动高亮（scroll spy）+ 目录自身跟随滚动 */
+  var raf = 0, lastIdx = -2;
+  function spy(force){
+    var pg = document.querySelector(".tabpage.show"); if(!pg) return;
+    var tab = pg.id.slice(5);
+    Object.keys(mapGrp).forEach(function(k){ mapGrp[k].classList.remove("is-cur"); });
+    var gk = groupOfTab(tab);
+    if(gk) mapGrp[gk].classList.add("is-cur");
+    ensureGroup(tab, true);
+
+    var hs = pg.querySelectorAll("h2, h3, .qt, .practice-title"), best = null, lastH2 = null, i;
+    for(i = 0; i < hs.length; i++){
+      if(hs[i].getBoundingClientRect().top <= 150){
+        if(hs[i].tagName === "H2") lastH2 = hs[i];
+        best = hs[i];
+      }
+    }
+    /* 落点审美：刚跳到某 h2（它还没滚出视口顶端）时，高亮 h2 而不是它下面第一条子项 */
+    if(best && best.tagName !== "H2" && lastH2 && lastH2.getBoundingClientRect().top > -60) best = lastH2;
+    var idx = -1;
+    if(best){ for(i = 0; i < order.length; i++){ if(order[i].el === best){ idx = i; break; } } }
+    if(idx < 0){ for(i = 0; i < order.length; i++){ if(order[i].el.closest(".tabpage") === pg){ idx = i; break; } } }
+
+    if(idx === lastIdx && !force) return;   /* 只在"换了一节"时改状态，避免与用户手动折叠打架 */
+    lastIdx = idx;
+    Array.prototype.forEach.call(nav.querySelectorAll(".sn-nav.active"), function(n){ n.classList.remove("active"); });
+    if(idx < 0) return;
+    var node = order[idx].node;
+    node.classList.add("active");
+    var p = node.parentNode;
+    while(p && p !== nav){
+      if(p.classList && p.classList.contains("sn-children")){
+        var tw = mapTw[p.getAttribute("data-k")];
+        if(tw && tw.getAttribute("aria-expanded") !== "true") setOpen(tw, p, true);
+      }
+      p = p.parentNode;
+    }
+    /* 若当前条目自己还有下一级（h2 → h3 子节），也把它展开——否则"人在这一节里，
+       目录却看不见这一节的细分"，正是"分得细"要避免的断档 */
+    var key = node.getAttribute("data-el");
+    if(key){
+      var myBox = mapBox["i" + key], myTw = mapTw["i" + key];
+      if(myBox && myTw && myTw.getAttribute("aria-expanded") !== "true") setOpen(myTw, myBox, true);
+    }
+    var top = node.offsetTop;
+    if(top < side.scrollTop + 50) side.scrollTop = Math.max(0, top - 70);
+    else if(top > side.scrollTop + side.clientHeight - 60) side.scrollTop = top - side.clientHeight + 90;
+  }
+  function onScroll(){ if(raf) return; raf = requestAnimationFrame(function(){ raf = 0; spy(); }); }
+  window.addEventListener("scroll", onScroll, {passive: true});
+
+  /* ⑥ 窄屏抽屉 */
+  function isMobile(){ return window.innerWidth <= 1200; }
+  var bd = document.getElementById("sideBackdrop"), tg = document.getElementById("sideToggle");
+  function closeDrawer(){ side.classList.remove("open"); if(bd) bd.classList.remove("show"); }
+  if(tg) tg.addEventListener("click", function(){
+    if(isMobile()){
+      var open = !side.classList.contains("open");
+      side.classList.toggle("open", open);
+      if(bd) bd.classList.toggle("show", open);
+    } else {
+      document.body.classList.toggle("side-hidden");
+    }
+  });
+  if(bd) bd.addEventListener("click", closeDrawer);
+  window.addEventListener("resize", function(){
+    if(!isMobile()) closeDrawer();
+    setTimeout(function(){ spy(true); }, 160);
+  });
+
+  /* ⑦ 初始化：当前板块分支默认展开；MathJax 排版后再定位一次 */
+  ensureGroup(nowTab() || TABS[0], true);
+  setTimeout(function(){ spy(true); }, 420);
+  setTimeout(function(){ spy(true); }, 1400);
+})();
+</script>
+</body>
+</html>
