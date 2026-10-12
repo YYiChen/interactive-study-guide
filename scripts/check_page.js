@@ -175,7 +175,9 @@ out.push('--- figures & interaction ---');
 const diagCount = (html.match(/class=["'][^"']*\bdiag\b[^"']*["']/g) || []).length;
 const caps = [...html.matchAll(/<div class="cap">([\s\S]*?)<\/div>/g)]
   .map(x => x[1].replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim());
-const labelRe = /^图\s*([A-Za-z]+[′″']?)\s*[·:：]/;
+/* 图号：字母式（图 A / 图 A′）或数字式（图 1‑1 / 4‑2 / 1.2），撇号计入编号；
+   编号后跟空白 / · : ： . 全角空格或结尾；正文里"见图 1‑1"式引用不匹配（锚定行首）。 */
+const labelRe = /^图\s*([0-9A-Za-z]+(?:[.\-‑–—][0-9A-Za-z]+)*['′″]?)(?:[\s·:：　.]|$)/;
 const seen = {};
 for (const c of caps) { const m = labelRe.exec(c); if (m) (seen[m[1]] = seen[m[1]] || []).push(c.slice(0,30)); }
 const dup = Object.keys(seen).filter(k => seen[k].length > 1);
