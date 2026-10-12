@@ -156,6 +156,49 @@ out.push('--- formula rendering ---');
 if (/\\\(|\\\[/.test(html) && !/mathjax/i.test(html)) WARN('TeX delimiters found but MathJax reference not detected');
 else out.push('  formula renderer linkage looks plausible');
 
+/* 12. page archetype */
+out.push('--- page archetype ---');
+const archMatch = /<body[^>]*data-archetype=["']([A-Za-z-]+)["']/i.exec(html);
+const archetype = archMatch ? archMatch[1].toLowerCase() : '';
+if (!archetype) WARN('data-archetype not declared on <body>; SKILL.md §8 requires it (assuming exam-prep)');
+const arch = archetype || 'exam-prep';
+function hasTab(id) { return new RegExp(`id=["']page-${id}["']`).test(html); }
+const optPresent = ['examples','practice'].filter(hasTab);
+const optMissing = ['examples','practice'].filter(t => !hasTab(t));
+out.push(`  archetype: ${arch}${archMatch ? '' : ' (assumed)'}; optional tabs present: ${optPresent.join(', ') || '(none)'}`);
+if (arch === 'exam-prep' && optMissing.length) WARN(`exam-prep expects examples+practice tabs; missing: ${optMissing.join(', ')}`);
+else if ((arch === 'principle' || arch === 'review') && optPresent.length) WARN(`${arch} archetype normally closes examples/practice; found ${optPresent.join(', ')} — keep only if the user explicitly asked`);
+if (arch === 'custom') INFO('custom archetype: structure is governed by the user-confirmed board list; verify tabs match the declaration');
+
+/* 13. figures & interaction (v5.0 hard rules) */
+out.push('--- figures & interaction ---');
+const diagCount = (html.match(/class=["'][^"']*\bdiag\b[^"']*["']/g) || []).length;
+const caps = [...html.matchAll(/<div class="cap">([\s\S]*?)<\/div>/g)]
+  .map(x => x[1].replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim());
+const labelRe = /^图\s*([A-Za-z]+[′″']?)\s*[·:：]/;
+const seen = {};
+for (const c of caps) { const m = labelRe.exec(c); if (m) (seen[m[1]] = seen[m[1]] || []).push(c.slice(0,30)); }
+const dup = Object.keys(seen).filter(k => seen[k].length > 1);
+out.push(`  figures(.diag): ${diagCount}; numbered captions: ${Object.keys(seen).join(', ') || '(none)'}`);
+if (dup.length) FAIL(`duplicate figure numbers: ${dup.map(k => k + '×' + seen[k].length).join(', ')} (same 图号 used by multiple figures)`);
+else if (Object.keys(seen).length) out.push('  figure numbers unique OK');
+const axisNote = /横轴|实轴|水平边|水平分量|纵轴|虚轴|竖直|竖轴/.test(caps.join(' '));
+if (diagCount >= 2 && !axisNote) WARN('multiple figures but no axis-basis note in captions; if the page mixes coordinate systems, state each figure basis (see interactive-patterns.md §5)');
+for (const tb of tabs) {
+  if (!/^topic/.test(tb.id)) continue;
+  const n = (tb.body.match(/class=["'][^"']*\bdiag\b[^"']*["']/g) || []).length;
+  if (n === 0) WARN(`[${tb.id}] no visual anchor (.diag) in a knowledge tab — every knowledge tab needs at least one figure / interaction`);
+}
+/* 交互信号统计：先剔除引擎自带的 scroll-spy 节流行（onScroll 内的 rAF 不是教学交互），
+   避免"纯静态图页面"因引擎噪音被误判为有交互。 */
+const htmlNoSpy = html.split('\n').filter(l => !/function onScroll/.test(l)).join('\n');
+const interactives =
+  (htmlNoSpy.match(/type="range"/g) || []).length +
+  (htmlNoSpy.match(/requestAnimationFrame/g) || []).length +
+  (htmlNoSpy.match(/addEventListener\(\s*["'](?:input|change|pointerdown|mousedown|touchstart)["']/g) || []).length;
+out.push(`  interactive widgets detected: ${interactives}`);
+if (diagCount > 0 && interactives === 0) WARN('figures exist but no interactive widget detected; figures in the five patterns (parameter sensitivity / time evolution / geometry / graph reading / method comparison) must be interactive by default');
+
 /* final */
 out.push('=====================================');
 if (fail) out.push(`FAIL: ${fail} hard issue(s), ${warn} warning(s)`);

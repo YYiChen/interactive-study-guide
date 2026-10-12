@@ -1,16 +1,24 @@
 <!DOCTYPE html>
 <!--
-  Interactive Study Guide v4.0 Final · 通用工科/工程数学学习页模板
+  Interactive Study Guide v5.0 · 页面原型参考实现（exam-prep 完整版）
 
-  原则：
-  - 本模板提供成熟 UI/导航引擎，不规定具体学科知识。
-  - 默认用于零基础预习；正式教学、例题/训练、复习总结分层。
-  - 不强制“每题一个前置知识块”；依赖缺口按 recall / bridge / 回修正文处理。
-  - 不强制每页固定数量的自检、表格、动效或练习；是否加入由学习任务决定。
-  - 复习内容默认收口到一个“🧾 总结”一级入口。
-  - 新增知识优先回到其 Canonical Teaching Location，不在页面末尾堆“补充”。
+  本模板是什么：
+  - 它是页面原型库中 exam-prep（考试预习）的完整参考实现，提供成熟 UI/导航引擎；
+  - 其他原型（principle 原理/实验讲解、review 复习速查）从这里裁剪，不是重写；
+  - 板块取舍规则与裁剪步骤见 references/page-archetypes.md，动手前先定原型。
 
-  结构与规则见 references/teaching-architecture.md、content-rules.md、page-structure.md。
+  本模板不规定什么：
+  - 不规定具体学科知识、板块数量、每题一个前置块、每页固定数量的自检/表格/动效；
+  - 是否加入某个组件由学习任务决定；但"图与交互最低要求"是硬规则（每个知识板块
+    至少 1 个视觉锚点；五类交互模式默认必须可交互），不随原型放松。
+
+  当前声明：data-archetype="exam-prep"（总览 → 知识板块 → 例题 → 训练 → 总结）
+  改成 principle / review 时：删 page-examples / page-practice 两个 tabpage 整块 +
+  顶栏 btn-examples / btn-practice 两个按钮 + TABS 数组里两项 + 所有指向它们的
+  goto('…')（含各 pager 里的"下一页"按钮），并把 body 上的 data-archetype 改掉。
+
+  结构与规则见 references/teaching-architecture.md、content-rules.md、page-structure.md、
+  page-archetypes.md、interactive-patterns.md。
   完成后运行：node scripts/check_page.js <page.html>
 -->
 <html lang="zh-CN">
@@ -222,7 +230,7 @@
     outline:2px solid var(--accent); outline-offset:2px; border-radius:6px;}
 </style>
 </head>
-<body>
+<body data-archetype="exam-prep">
 
 <div class="side-backdrop" id="sideBackdrop"></div>
 <div class="app">
@@ -306,6 +314,37 @@
 <h3>关键一步为什么成立？</h3>
 <p>【只展开真正阻断理解的推导步骤。】</p>
 
+<!-- ============ 视觉锚点示范（每个知识板块至少 1 个；用时整块替换） ============ -->
+<!-- 这是"参数敏感性"类交互的最小可抄骨架：独立 IIFE + 元素守卫 + 初始化跑一次。
+     SVG 里画静态部分（轴/标签），JS 只更新会动的元素；JS 失效时静态图仍可读。
+     落在参数敏感性/时间演化/几何关系/图形读法/方法对比五类之一的图，默认必须可交互。 -->
+<div class="diag" id="demo-slider" style="text-align:left;">
+<div style="font-size:13px;margin:0 16px 6px;">🎛 <b>参数探险器</b>：拖动滑块，看曲线与读数怎么变</div>
+<div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;align-items:flex-start;">
+<svg id="dSvg" width="430" height="250" viewBox="0 0 430 250" role="img" aria-label="参数-结果曲线示意图"><!-- 静态坐标轴与标签画在这里 --></svg>
+<div style="min-width:250px;">
+<div>参数 a = <b id="dAv">1.00</b>
+<input type="range" id="dA" min="0.1" max="3" step="0.05" value="1" style="width:100%;accent-color:var(--accent);" aria-label="参数 a">
+</div>
+<div id="dInfo" style="font-size:12.5px;color:var(--muted);"></div>
+</div>
+</div>
+<div class="cap">交互 · 它让“参数如何改变结果”变得可见；观察曲线形状与读数同步变化；结论：【一句静态结论，不依赖交互也能读到】</div>
+</div>
+<script>
+(function(){
+  var s = document.getElementById("dA"); if(!s) return;
+  var info = document.getElementById("dInfo");
+  function upd(){
+    var a = parseFloat(s.value);
+    /* ① 按本页公式计算 → ② 更新 SVG 图形属性 → ③ 更新读数（读数必须等于公式值） */
+    document.getElementById("dAv").textContent = a.toFixed(2);
+    info.innerHTML = "当前结果：<b>【公式计算值】</b>";
+  }
+  s.addEventListener("input", upd); upd();
+})();
+</script>
+
 <div class="check"><b>🧩 小检查（可选）：</b>【1–3 个高价值问题；若只是复述正文可删掉。】</div>
 
 <h2>第一次应用</h2>
@@ -331,6 +370,14 @@
 <a href="#" onclick="gotoText('为什么需要这个量');return false;">回到正式教学地址</a></div>
 <p>【继续新知识的正式教学。】</p>
 
+<!-- ============ 静态图示范（几何/示意类用；用时整块替换） ============ -->
+<!-- 静态图契约：.diag 容器 + .cap 图注三要素；坐标轴/单位/正方向/关键标记必须可读；
+     远处标签用细引导线连回对象；一张图标注控制在 8 个以内。 -->
+<div class="diag">
+<svg width="430" height="220" viewBox="0 0 430 220" role="img" aria-label="几何示意图"><!-- 静态示意图：坐标轴 + 标注 + 引导线 --></svg>
+<div class="cap">图 A · 它让【几何关系 / 部件位置】变得可见；观察横轴、纵轴标注与关键标记；结论：【一句静态结论】</div>
+</div>
+
 <h2>什么时候需要局部知识桥？</h2>
 <p>如果某个技巧只服务当前题/当前情境，可放 bridge；若之后会反复使用，就应升格到正式教学。</p>
 <details class="bridge"><summary>本情境需要的局部知识桥</summary><div class="detail-body">
@@ -353,6 +400,8 @@
 </div>
 
 <!-- ============ 例题：来自当前课程材料的代表性任务 ============ -->
+<!-- 【原型裁剪标记 · exam-prep 必备】principle / review 原型下删除本整块 + 顶栏 btn-examples
+     按钮 + TABS 里的 "examples" + 所有 goto('examples')（含上一板块 pager 的"下一页"）。 -->
 <div class="tabpage" id="page-examples">
 <h1>📚 例题</h1>
 <p class="sub">用于观察课程材料中的代表性解题动作。例题答案也必须通过 Solution-backward Audit。</p>
@@ -366,6 +415,8 @@
 </div>
 
 <!-- ============ 训练：不靠题前教学掩盖缺口 ============ -->
+<!-- 【原型裁剪标记 · exam-prep 必备】principle / review 原型下删除本整块 + 顶栏 btn-practice
+     按钮 + TABS 里的 "practice" + 所有 goto('practice')（含例题区 pager 的"下一页"）。 -->
 <div class="tabpage" id="page-practice">
 <h1>📝 训练</h1>
 <p class="sub">Transfer / Exam Practice。若答案需要正文从未教过的方法，应回修正文，而不是在题前临时补课。</p>
@@ -411,6 +462,9 @@
 </div><!-- /app -->
 
 <script>
+  /* 页签清单 = 顶栏按钮 = tabpage 三者必须一致（checker 会核对）。
+     exam-prep：全部保留；principle / review：删 "examples","practice"，
+     同步删顶栏按钮与两个 tabpage 整块，见 references/page-archetypes.md §3。 */
   var TABS = ["home","topic1","topic2","examples","practice","summary"];
   function goto(id){
     TABS.forEach(function(t){
