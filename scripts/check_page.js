@@ -183,7 +183,7 @@ out.push(`  figures(.diag): ${diagCount}; numbered captions: ${Object.keys(seen)
 if (dup.length) FAIL(`duplicate figure numbers: ${dup.map(k => k + '×' + seen[k].length).join(', ')} (same 图号 used by multiple figures)`);
 else if (Object.keys(seen).length) out.push('  figure numbers unique OK');
 const axisNote = /横轴|实轴|水平边|水平分量|纵轴|虚轴|竖直|竖轴/.test(caps.join(' '));
-if (diagCount >= 2 && !axisNote) WARN('multiple figures but no axis-basis note in captions; if the page mixes coordinate systems, state each figure basis (see interactive-patterns.md §5)');
+if (diagCount >= 2 && !axisNote) WARN('multiple figures but no axis-basis note in captions; if the page mixes coordinate systems, state each figure basis (see interactive-patterns.md §6)');
 for (const tb of tabs) {
   if (!/^topic/.test(tb.id)) continue;
   const n = (tb.body.match(/class=["'][^"']*\bdiag\b[^"']*["']/g) || []).length;
@@ -197,7 +197,7 @@ const interactives =
   (htmlNoSpy.match(/requestAnimationFrame/g) || []).length +
   (htmlNoSpy.match(/addEventListener\(\s*["'](?:input|change|pointerdown|mousedown|touchstart)["']/g) || []).length;
 out.push(`  interactive widgets detected: ${interactives}`);
-if (diagCount > 0 && interactives === 0) WARN('figures exist but no interactive widget detected; figures in the five patterns (parameter sensitivity / time evolution / geometry / graph reading / method comparison) must be interactive by default');
+if (diagCount > 0 && interactives === 0) INFO('figures exist but no interactive widget detected — fine for type A (structure/apparatus) and static comparison tables; if any type C figure (parameter sensitivity / time evolution / geometry / graph reading / method comparison) is present, make it interactive (see interactive-patterns.md)');
 
 /* final */
 out.push('=====================================');
