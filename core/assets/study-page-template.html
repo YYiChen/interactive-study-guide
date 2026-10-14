@@ -1,25 +1,27 @@
 <!DOCTYPE html>
 <!--
-  Interactive Study Guide v5.0 · 页面原型参考实现（exam-prep 完整版）
+  Interactive Study Guide v5.1 · 页面原型参考实现（exam-prep 完整版）
 
   本模板是什么：
   - 它是页面原型库中 exam-prep（考试预习）的完整参考实现，提供成熟 UI/导航引擎；
   - 其他原型（principle 原理/实验讲解、review 复习速查）从这里裁剪，不是重写；
-  - 板块取舍规则与裁剪步骤见 references/page-archetypes.md，动手前先定原型。
+  - 板块取舍规则与裁剪步骤见 core/references/page-archetypes.md，动手前先定原型。
 
   本模板不规定什么：
   - 不规定具体学科知识、板块数量、每题一个前置块、每页固定数量的自检/表格/动效；
   - 是否加入某个组件由学习任务决定；但"图与交互最低要求"是硬规则（每个知识板块
-    至少 1 个视觉锚点；五类交互模式默认必须可交互），不随原型放松。
+    至少 1 个视觉锚点；C 类关系演化图默认必须可交互），不随原型放松。
 
   当前声明：data-archetype="exam-prep"（总览 → 知识板块 → 例题 → 训练 → 总结）
+  领域声明：data-domain="engineering"（默认域）。换领域时改 body 上的 data-domain，
+  并先读 domains/<domain>/domain.md；领域只调整组织轴与表达口径，不放松 core 规则。
   改成 principle / review 时：删 page-examples / page-practice 两个 tabpage 整块 +
   顶栏 btn-examples / btn-practice 两个按钮 + TABS 数组里两项 + 所有指向它们的
   goto('…')（含各 pager 里的"下一页"按钮），并把 body 上的 data-archetype 改掉。
 
-  结构与规则见 references/teaching-architecture.md、content-rules.md、page-structure.md、
+  结构与规则见 core/references/teaching-architecture.md、content-rules.md、page-structure.md、
   page-archetypes.md、interactive-patterns.md。
-  完成后运行：node scripts/check_page.js <page.html>
+  完成后运行：node core/scripts/check_page.js <page.html>
 -->
 <html lang="zh-CN">
 <head>
@@ -230,7 +232,7 @@
     outline:2px solid var(--accent); outline-offset:2px; border-radius:6px;}
 </style>
 </head>
-<body data-archetype="exam-prep">
+<body data-archetype="exam-prep" data-domain="engineering">
 
 <div class="side-backdrop" id="sideBackdrop"></div>
 <div class="app">
@@ -464,7 +466,7 @@
 <script>
   /* 页签清单 = 顶栏按钮 = tabpage 三者必须一致（checker 会核对）。
      exam-prep：全部保留；principle / review：删 "examples","practice"，
-     同步删顶栏按钮与两个 tabpage 整块，见 references/page-archetypes.md §3。 */
+     同步删顶栏按钮与两个 tabpage 整块，见 core/references/page-archetypes.md §3。 */
   var TABS = ["home","topic1","topic2","examples","practice","summary"];
   function goto(id){
     TABS.forEach(function(t){
@@ -724,7 +726,7 @@
    3) 滚动时高亮当前小节（scroll spy），并让它所在目录分支保持展开、自身滚动可见。
    4) 窄屏（≤1200px）自动变抽屉：顶栏「☰ 目录」开合 + 点遮罩关闭。
    实现约束：只用 createElement 建节点（不在 JS 里写标签字符串），以免干扰
-   scripts/check_page.js 的标签配对统计；key 命名：组 "g0"、条目 "g0_2"、三级 "g0_2_1"。 */
+   core/scripts/check_page.js 的标签配对统计；key 命名：组 "g0"、条目 "g0_2"、三级 "g0_2_1"。 */
 (function(){
   var side = document.getElementById("side");
   var nav  = document.getElementById("sideNav");

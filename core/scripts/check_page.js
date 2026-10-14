@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 /*
- * Interactive Study Guide v4.0 — static checker
- * Usage: node scripts/check_page.js <page.html>
+ * Interactive Study Guide v5.1 — static checker
+ * Usage: node core/scripts/check_page.js <page.html>
  *
  * This checker verifies mechanical HTML/UI consistency only.
  * It does NOT prove subject-matter correctness, prerequisite completeness,
  * assessment scope, or pedagogical quality. Those require the audits in
- * references/verification.md.
+ * core/references/verification.md.
  */
 const fs = require('fs');
 const file = process.argv[2];
-if (!file) { console.error('usage: node scripts/check_page.js <page.html>'); process.exit(2); }
+if (!file) { console.error('usage: node core/scripts/check_page.js <page.html>'); process.exit(2); }
 const raw = fs.readFileSync(file, 'utf8');
 const html = raw.replace(/<!--[\s\S]*?-->/g, ' ');
 const slim = html.replace(/<script[\s\S]*?<\/script>/gi, ' ');
@@ -169,6 +169,11 @@ out.push(`  archetype: ${arch}${archMatch ? '' : ' (assumed)'}; optional tabs pr
 if (arch === 'exam-prep' && optMissing.length) WARN(`exam-prep expects examples+practice tabs; missing: ${optMissing.join(', ')}`);
 else if ((arch === 'principle' || arch === 'review') && optPresent.length) WARN(`${arch} archetype normally closes examples/practice; found ${optPresent.join(', ')} — keep only if the user explicitly asked`);
 if (arch === 'custom') INFO('custom archetype: structure is governed by the user-confirmed board list; verify tabs match the declaration');
+const KNOWN_ARCH = ['exam-prep', 'principle', 'review', 'custom'];
+if (archetype && !KNOWN_ARCH.includes(archetype)) WARN(`unknown data-archetype "${archetype}"; use one of ${KNOWN_ARCH.join(' / ')} — domain content patterns map onto these values, see domains/<domain>/`);
+const domMatch = /<body[^>]*data-domain=["']([A-Za-z0-9_-]+)["']/i.exec(html);
+if (domMatch) INFO(`domain: ${domMatch[1].toLowerCase()} — domain rules in domains/${domMatch[1].toLowerCase()}/domain.md`);
+else INFO('data-domain not declared on <body>; assuming the default domain (engineering, or the custom board declared in the page header)');
 
 /* 13. figures & interaction (v5.0 hard rules) */
 out.push('--- figures & interaction ---');

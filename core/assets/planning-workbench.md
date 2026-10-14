@@ -1,8 +1,12 @@
-# Planning Workbench（持续课程项目 · 内部施工图模板）
+# Planning Workbench（持续项目 · 内部施工图模板）
 
 > 这份文件用于生成前规划，不需要复制进最终学习页。
+> 动手前先按 `../SKILL.md` §0 确定 `domain`，并读 `domains/<domain>/domain.md`。
 
 ## 0. Course Project State
+
+- domain：`engineering` / `ielts` / 其他（未注册领域按 custom 处理）
+- 已读领域文件：`domains/<domain>/domain.md`（以及该域要求继续读的文件）
 
 ### Material Ledger
 | material_id | 当前观察范围 | roles | 与已有材料关系 | Coverage State 影响 | 备注 |
@@ -32,6 +36,14 @@
 |  |  |  |  |  |  |
 
 > 不要求逐句追踪来源；只登记课程核心项、推断出的必要前置和重要补充。
+
+## 2b. Provenance Ledger（来源登记）
+
+| 节点 id | 来源 material_id | 定位（页/段/题号/时间码） | 来源角色 | 课次 / 日期 | 强调或批注（原样） | 用户原话引用 |
+|---|---|---|---|---|---|---|
+|  |  |  |  |  |  |  |
+
+> 一个节点有多条来源就占多行，不要只留一条。个人总结、强调与提醒尽量保留原句；定位记不清就留空，**不要编造**。领域适配器可追加列（IELTS 见 `domains/ielts/knowledge-units.md` §5）。
 
 ## 3. Mastery Map
 

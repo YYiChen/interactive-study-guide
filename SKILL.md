@@ -1,11 +1,11 @@
 ---
 name: interactive-study-guide
-version: 5.0
-description: 将分批、来源多样、完整度不固定的工科/工程数学课程资料持续整理成面向零基础预习、最终能独立考试的交互式学习 HTML。适用于概念+符号+方程/公式+条件+推导+题型类课程；支持后续任意新增、修订、替换、补充材料的增量重规划，避免知识断层、静默缩水、补丁式膨胀和考试边界误判。页面结构按读者任务选择页面原型（考试预习 / 原理与实验讲解 / 复习速查），例题与训练等板块不再写死。
-summary: 课件用于提供课程与考核线索，不是知识上限。模型应主动补齐必要前置与解释，并通过知识依赖图、符号登记、题目反查和增量状态管理，保证内容完整、顺序清晰、后续材料可稳定并入。结构随任务选型，图与交互有最低硬要求。
+version: 5.1
+description: 将分批、来源多样、完整度不固定的学习资料（工科课程与工程数学，以及 IELTS 等语言学习资料）持续整理成面向零基础、最终能独立应考的交互式学习 HTML。采用 Core + Domain 三层结构，通用教学机制在 core/，领域适配器在 domains/（engineering 默认、ielts）。适用于概念+符号+公式+条件+推导+题型类课程，也适用于教师讲解、课堂笔记、语言素材、范文与个人经验总结类资料；支持后续任意新增、修订、替换、补充材料的增量重规划，避免知识断层、静默缩水、补丁式膨胀和考试边界误判。页面结构按读者任务选择原型，例题与训练等板块不写死。
+summary: 三层结构——core（通用教学机制、页面引擎、检查器，任何领域照跑）+ domains/<domain>（领域适配器：这类资料怎么读、知识怎么成节、页面怎么表达）+ 项目数据（由用户真实资料决定，不预设结构）。课件只提供线索，不是知识上限；模型主动补齐必要前置，并用知识依赖图、登记表、来源记录与增量状态管理保证内容不缩水、可稳定并入。
 ---
 
-# Interactive Study Guide v5.0
+# Interactive Study Guide v5.1
 
 ## 目标
 
@@ -13,13 +13,40 @@ summary: 课件用于提供课程与考核线索，不是知识上限。模型�
 
 **从零能读懂 → 知识不跳步 → 公式有来路与条件 → 能独立做题 → 后续新材料可稳定并入** 的学习系统。
 
-默认面向：固体/材料力学、动力学、热力学、流体、传热、工程数学、微分方程及其他相近工科课程。
+默认领域 `engineering`（固体/材料力学、动力学、热力学、流体、传热、工程数学、微分方程及其他相近工科课程）；IELTS 等语言学习资料走 `domains/ielts/`。**领域规则只调整组织轴与表达口径，不改变下面的教学机制。**
 
 固定的是**教学机制**，不是某一学科的公式或章节模板。
 
 优先级：
 
 **知识正确 > 依赖完整 > 考试能力覆盖 > 内容不缩水 > 去重与认知负荷 > UI 精致。**
+
+---
+
+## 0. 领域调度（Domain Dispatch）
+
+本 Skill 分三层，动手前先确认自己在哪一层：
+
+| 层 | 位置 | 谁决定 |
+|---|---|---|
+| **Core** | `core/` | 通用教学机制、页面引擎、检查器；任何领域都照跑 |
+| **Domain** | `domains/<domain>/` | 这类资料怎么读、知识怎么成节、页面怎么表达 |
+| **Project** | 用户资料 + 生成的 HTML + `course-state.json` | **由真实资料决定，Skill 不预设** |
+
+执行顺序：
+
+1. 先读本文件 §0–§16（core 规则常驻，不因领域放松）；
+2. **判定 domain**：
+   - 用户显式指定（如“按 IELTS 领域来做”）→ 直接采用；
+   - 未指定 → 按资料特征判定（工科/理科课程 → `engineering`；IELTS/语言学习 → `ielts`）；
+   - 判不准，或一批资料横跨多个领域 → 问用户，不要默默猜；横跨时指定主领域 + 附属领域，并在交付说明里写明；
+3. 读 `domains/<domain>/domain.md`，按它给出的加载清单加载领域规则；
+4. 领域规则与 core 冲突时，core 的教学机制、增量归位与交付 Gate 优先——领域只能调整“组织轴与表达口径”，不能放松硬规则；
+5. 页面同时声明领域与结构原型：`<body data-archetype="…" data-domain="…">`，页面顶部注释写清原型取舍理由与领域。
+
+领域未注册时按 `custom` 处理（同 §8）：先写下读者任务、板块清单、与最近领域的差异、哪些 core 硬规则仍适用，用户确认后再动手。
+
+已注册领域见 `domains/README.md`（当前：`engineering` 为默认、`ielts`）。
 
 ---
 
@@ -36,9 +63,9 @@ summary: 课件用于提供课程与考核线索，不是知识上限。模型�
 - 当前材料没写全 = **不能因此不讲必要知识**；
 - 新材料到来 = 先分析影响，再局部更新，不要整页推翻重写。
 
-若环境允许，维护 `course-state.json`，模板见 `assets/course-state-template.json`。
+若环境允许，维护 `course-state.json`，模板见 `core/assets/course-state-template.json`。
 
-详见 `references/incremental-project-state.md`。
+详见 `core/references/incremental-project-state.md`。
 
 ---
 
@@ -57,7 +84,7 @@ A+B+C 可进入正式教学主线。D 默认放 `<details class="deep">` 或不�
 
 不要把补充内容伪装成老师原话；也不要因为模型知道更多就扩成百科。
 
-详见 `references/source-expansion-policy.md`。
+详见 `core/references/source-expansion-policy.md`。
 
 ---
 
@@ -65,16 +92,17 @@ A+B+C 可进入正式教学主线。D 默认放 `<details class="deep">` 或不�
 
 每轮创建或更新前，先扫描：**当前全部材料 + 现有 HTML + 既有状态**。
 
-至少维护六张内部表：
+至少维护以下内部表：
 
 1. **Coverage Baseline**：已有概念、符号、公式、条件、推导、技巧、例题、易错点；
 2. **Mastery Map**：学生最终需要解释、计算、判断、建模、识别、证明或应用什么；
 3. **Prerequisite Graph**：每个能力依赖哪些知识；
-4. **Symbol Registry**：每个符号的首现、含义、单位/量纲、记号类型；
+4. **Symbol Registry**：每个符号/术语的首现、含义、单位或用法、记号类型；
 5. **Question Dependency Map**：每道题的关键解题动作依赖什么、教学地址在哪里；
-6. **Material Ledger / Delta Log**：新材料相对旧状态新增、修订、冲突或强化了什么。
+6. **Material Ledger / Delta Log**：新材料相对旧状态新增、修订、冲突或强化了什么；
+7. **Provenance Ledger**：每个知识节点的来源——哪份材料、哪次课、哪条笔记、定位、时间，以及用户自己的强调与批注。领域适配器可扩展字段（见 `domains/<domain>/`）。
 
-这些表是内部施工图，不要求全部展示给学生。可使用 `assets/planning-workbench.md`。
+这些表是内部施工图，不要求全部展示给学生。可使用 `core/assets/planning-workbench.md`。
 
 ---
 
@@ -175,7 +203,7 @@ A+B+C 可进入正式教学主线。D 默认放 `<details class="deep">` 或不�
 - 原型只规定**板块类别**的必备 / 可选 / 默认关闭，不规定板块数量；知识板块内部顺序仍按 §9“读者问题”划分，课程小可合并、大可拆多个 HTML；
 - 原型选择必须向用户明示（一句话即可，如“按原理讲解型组织，不含例题与训练”）；
 - 页面必须声明所用原型：`<body data-archetype="principle">`，并在页面顶部注释写一句取舍理由；
-- `assets/study-page-template.html` 是 `exam-prep` 的**完整参考实现**；其他原型从它裁剪，裁剪步骤（删 tab、同步 TABS、清跳转键、checker 期望变化）见 `references/page-archetypes.md`；
+- `core/assets/study-page-template.html` 是 `exam-prep` 的**完整参考实现**；其他原型从它裁剪，裁剪步骤（删 tab、同步 TABS、清跳转键、checker 期望变化）见 `core/references/page-archetypes.md`；
 - 不要再把“易混淆 / 速记表 / 公式汇总”拆成多个一级复习页；统一收口到总结。
 
 表达分层（与原型正交，所有原型都适用）：
@@ -210,15 +238,13 @@ A+B+C 可进入正式教学主线。D 默认放 `<details class="deep">` 或不�
 
 ## 10. 学科结构允许不同
 
-Skill 不规定统一学科主线。模型应根据当前课程的对象与任务识别最自然的结构。
+Skill 不规定统一学科主线。结构由**领域适配器 + 当前真实资料**共同决定，不写死。
 
-示例只是启发：
+Core 只要求：
 
-- 力学类常见：对象/几何/受力 → 方程 → 条件 → 求解 → 解释；
-- 热流体类常见：系统/控制体 → 守恒 → 物性/本构/状态关系 → 假设 → 求解；
-- 数学类常见：定义 → 性质/定理 → 推导/证明 → 方法 → 例题。
-
-不要把任何一个示例当成强制模板。
+- 主线能回答“先有什么、再有什么”，顺序由 Prerequisite Graph 决定，不由资料顺序决定；
+- 每一段都对应一个读者问题（§9）；
+- 领域特异的组织轴与主线示例写在 `domains/<domain>/`：工程见 `domains/engineering/domain.md` §3，IELTS 见 `domains/ielts/organization.md` §2。示例都只是启发，不是强制模板。
 
 ---
 
@@ -253,7 +279,7 @@ Mastery Map 至少区分：
    - `ASSESSMENT_REWEIGHT`
    - `STRUCTURAL_REORDER`
    - `CORRECTION_OR_CONFLICT`
-4. **Update Maps First**：先更新六张施工图；
+4. **Update Maps First**：先更新 §3 的施工图（含 Provenance Ledger）；
 5. **Patch Canonical Locations**：新知识回到正式教学地址；
 6. **Preserve Stability**：非必要不改稳定知识 ID、锚点和用户熟悉的导航名；
 7. **Re-audit**：重新跑符号首现、依赖、题目反查、重复、正确性与技术检查。
@@ -283,7 +309,7 @@ Mastery Map 至少区分：
 
 ## 14. UI 与渐进披露
 
-直接基于 `assets/study-page-template.html` 修改，优先保留成熟的：
+直接基于 `core/assets/study-page-template.html` 修改，优先保留成熟的：
 
 - 顶层页签；
 - 左侧自动大纲；
@@ -303,17 +329,19 @@ Mastery Map 至少区分：
 
 | 图型 | 典型例子 | 默认要求 |
 |---|---|---|
-| **A 结构识别类** | 设备演示、部件示意、流程框图、装置照片 | **静态**；禁止为动而动，动效不增加理解就不做 |
-| **B 查表取值类** | Moody 图、K_L 表、粗糙度表、当量比、ε–NTU 关系、符号速查 | **优先可交互查表**：给一个可调量，实时高亮对应行/曲线并显示完整数值；最低限度"可调范围与详细数值可见" |
+| **A 结构识别类** | 结构图、部件/关系示意、流程框图、实物或界面照片 | **静态**；禁止为动而动，动效不增加理解就不做 |
+| **B 查表取值类** | 参数表、分级表、对应关系表、符号/术语速查 | **优先可交互查表**：给一个可调量，实时高亮对应行/曲线并显示完整数值；最低限度"可调范围与详细数值可见" |
 | **C 关系演化类** | 参数敏感性 / 时间演化 / 几何关系 / 图形读法 / 方法对比 / 量级感 | **必须可交互**（滑块、播放/暂停、拖动）；静态图只作 JS 失效时的降级兜底 |
 
 表格同样二分：**对比/收束型**（易错对照、符号汇总）保持静态；**查表取值型**按 B 类优先交互。
 
-所有图（无论动静）都要有图注三要素：它让什么变得可见 / 应观察什么 / 最终结论是什么。交互旁必须有静态结论，读数必须与公式计算值一致。判定口径与可抄代码骨架见 `references/interactive-patterns.md`。
+所有图（无论动静）都要有图注三要素：它让什么变得可见 / 应观察什么 / 最终结论是什么。交互旁必须有静态结论，读数必须与公式计算值一致。判定口径与可抄代码骨架见 `core/references/interactive-patterns.md`。
+
+各领域的典型例子与 A/B/C 判定口径见对应领域适配器：工程 `domains/engineering/domain.md` §4；IELTS 等语言学习资料 `domains/ielts/page-patterns.md` §3。
 
 模板默认依赖 MathJax CDN，因此是单 HTML 文件，不是严格离线；用户要求离线时再本地化依赖。
 
-详见 `references/page-structure.md` 与 `references/interactive-patterns.md`。
+详见 `core/references/page-structure.md` 与 `core/references/interactive-patterns.md`。
 
 ---
 
@@ -339,7 +367,7 @@ Mastery Map 至少区分：
 运行：
 
 ```bash
-node scripts/check_page.js your-page.html
+node core/scripts/check_page.js your-page.html
 ```
 
 再做浏览器目视和交互测试。
@@ -352,31 +380,49 @@ checker 只能证明结构没有明显机械问题，不能证明学科知识正
 
 用户反馈应转化成**通用规则**，不要把某门课的具体公式写回通用 Skill。
 
-- 教学结构问题 → `references/teaching-architecture.md`
-- 内容表达/符号/公式问题 → `references/content-rules.md`
-- 新材料/版本/考试证据问题 → `references/incremental-project-state.md`
-- 来源补全边界 → `references/source-expansion-policy.md`
-- UI/导航 → `references/page-structure.md`
-- 页面原型选型与裁剪 → `references/page-archetypes.md`
-- 动效模式 → `references/interactive-patterns.md`
+- 教学结构问题 → `core/references/teaching-architecture.md`
+- 内容表达/符号/公式问题 → `core/references/content-rules.md`
+- 新材料/版本/考试证据问题 → `core/references/incremental-project-state.md`
+- 来源补全边界 → `core/references/source-expansion-policy.md`
+- UI/导航 → `core/references/page-structure.md`
+- 页面原型选型与裁剪 → `core/references/page-archetypes.md`
+- 动效模式 → `core/references/interactive-patterns.md`
+- 领域适配器本身的问题（判错领域、领域规则与资料不符）→ `domains/README.md`
+- 工程域口径 → `domains/engineering/domain.md`
+- IELTS 域口径 → `domains/ielts/domain.md`
 
-某学科的具体事故只能作为案例保存，不能升级成全局强制规则。案例放 `references/case-studies/`。
+某学科或某场考试的具体事故只能作为案例保存，不能升级成全局强制规则。案例放 `core/references/case-studies/`。
 
 ---
 
 ## Resources
 
-- `references/teaching-architecture.md` —— 预习教学结构、知识闭环、Canonical Teaching Location、练习梯度。
-- `references/source-expansion-policy.md` —— 不完整材料下如何主动补齐但不过度扩张。
-- `references/incremental-project-state.md` —— 分批、乱序、修订、冲突材料的项目状态与考试证据管理。
-- `references/content-rules.md` —— 符号、公式、推导、例子、练习的通用写法。
-- `references/page-structure.md` —— HTML 信息架构、标题层级、导航与组件契约。
-- `references/page-archetypes.md` —— 页面原型选型（考试预习 / 原理与实验讲解 / 复习速查 / 自定义）与模板裁剪步骤。
-- `references/evolution-governance.md` —— 多轮修改如何归位，避免补丁式膨胀。
-- `references/interactive-patterns.md` —— 跨工科交互与动效模式：必须做交互的触发条件、可抄代码骨架、图容器契约。
-- `references/verification.md` —— 内容、依赖、正确性和技术验收。
-- `assets/study-page-template.html` —— 成熟 HTML/UI 引擎与当前规则示范。
-- `assets/planning-workbench.md` —— 生成前内部施工图模板。
-- `assets/course-state-template.json` —— 多轮更新的轻量状态模板。
-- `scripts/check_page.js` —— 静态结构检查器。
-- `scripts/slice_png.py` / `scripts/make_variant.py` —— 截图与交互验证辅助脚本。
+### Core（跨领域通用，任何领域都照跑）
+
+- `core/README.md` —— core 层地图、硬规则清单、Domain Adapter Contract。
+- `core/references/teaching-architecture.md` —— 预习教学结构、知识闭环、Canonical Teaching Location、练习梯度。
+- `core/references/source-expansion-policy.md` —— 不完整材料下如何主动补齐但不过度扩张。
+- `core/references/incremental-project-state.md` —— 分批、乱序、修订、冲突材料的项目状态与考试证据管理。
+- `core/references/content-rules.md` —— 概念、符号/术语、公式/规则、推导、例子、练习的通用写法。
+- `core/references/page-structure.md` —— HTML 信息架构、标题层级、导航与组件契约。
+- `core/references/page-archetypes.md` —— 结构原型选型（考试预习 / 原理与讲解 / 复习速查 / 自定义）与模板裁剪步骤。
+- `core/references/evolution-governance.md` —— 多轮修改如何归位，避免补丁式膨胀。
+- `core/references/interactive-patterns.md` —— 图型分级 A/B/C、必须做交互的触发条件、可抄代码骨架、图容器契约。
+- `core/references/verification.md` —— 内容、依赖、正确性和技术验收。
+- `core/references/case-studies/` —— 具体课程的教学事故与修复案例。
+- `core/assets/study-page-template.html` —— 成熟 HTML/UI 引擎与当前规则示范（`exam-prep` 完整参考实现）。
+- `core/assets/planning-workbench.md` —— 生成前内部施工图模板。
+- `core/assets/course-state-template.json` —— 多轮更新的轻量状态模板。
+- `core/scripts/check_page.js` —— 静态结构检查器（读取 `data-archetype` 与可选的 `data-domain`）。
+- `core/scripts/slice_png.py` / `core/scripts/make_variant.py` —— 截图与交互验证辅助脚本。
+
+### Domains（领域适配器，先读各自的 `domain.md`）
+
+- `domains/README.md` —— 领域注册表、判定与调度规则、新增领域步骤。
+- `domains/engineering/domain.md` —— 工科与工程数学（默认域）：学科主线、图型例子、内容与验证口径。
+- `domains/ielts/domain.md` —— IELTS 入口：定位与边界、判定信号、加载清单、core 概念落地表。
+- `domains/ielts/material-taxonomy.md` —— 资料类型判定（来源角色 × 内容性质、未知类型处理）。
+- `domains/ielts/knowledge-units.md` —— 知识单元抽取与合并、来源记录（provenance）、个人痕迹保留。
+- `domains/ielts/organization.md` —— 组织轴候选、从数据推出信息架构、IA 草案模板。
+- `domains/ielts/page-patterns.md` —— 语言学习页面原型、与结构原型的映射、视觉锚点口径。
+- `domains/ielts/incremental.md` —— 新材料并入流程与合并决策表。

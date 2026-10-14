@@ -1,7 +1,8 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "project": {
     "title": "",
+    "domain": "engineering",
     "baseline_contract": "current learning scope starts from zero unless otherwise specified",
     "last_updated": ""
   },
@@ -17,6 +18,10 @@
     {
       "id": "MAT-001",
       "label": "",
+      "carrier": "",
+      "material_type": "",
+      "origin": "",
+      "locator": "",
       "roles": [],
       "observed_scope": [],
       "relation_to_existing": "new",
@@ -27,11 +32,23 @@
     {
       "id": "K-001",
       "title": "",
+      "kind": "",
       "source_level": "A",
       "canonical_anchor": "",
       "prerequisites": [],
       "assessment_status": "unknown",
       "evidence_material_ids": [],
+      "sources": [
+        {
+          "material_id": "MAT-001",
+          "locator": "",
+          "role": "",
+          "session": "",
+          "emphasis": "",
+          "quote": ""
+        }
+      ],
+      "personal_marks": [],
       "aliases": []
     }
   ],

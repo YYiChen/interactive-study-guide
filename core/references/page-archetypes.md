@@ -32,19 +32,20 @@
 - 符号 / 公式首现规则、依赖审计、Solution-backward Audit 全部照跑；
 - 🧾 总结是唯一复习入口；
 - 图与交互硬要求照跑（SKILL.md §14）：每个知识板块至少 1 个视觉锚点。
+- 领域的内容原型（概念解释 / 技巧总结 / 案例分析 / 对比 / 复习速查）**映射到这四个结构原型**，不新增 `data-archetype` 取值（checker 依赖固定值）：见 `domains/ielts/page-patterns.md` §2；工程口径见 `domains/engineering/domain.md` §6。
 
 原型之间只差**板块取舍与表达密度**，不差教学质量。
 
 ## 3. 模板裁剪步骤（以 principle 为例）
 
-`assets/study-page-template.html` 是 `exam-prep` 的完整参考实现。裁成其他原型按以下顺序改，每步都要做，漏一步就出现“点了没反应 / 跳转失效 / checker 报错”：
+`core/assets/study-page-template.html` 是 `exam-prep` 的完整参考实现。裁成其他原型按以下顺序改，每步都要做，漏一步就出现“点了没反应 / 跳转失效 / checker 报错”：
 
-1. **声明原型**：`<body data-archetype="principle">`，页面顶部注释写一句取舍理由（如“实验原理讲解，不含例题与训练”）；
+1. **声明原型与领域**：`<body data-archetype="principle" data-domain="engineering">`，页面顶部注释写一句取舍理由（如“实验原理讲解，不含例题与训练”）并写明领域；
 2. **删 tabpage 块**：删除 `<div class="tabpage" id="page-examples">…</div>` 与 `id="page-practice"` 两个整块；
 3. **删顶栏按钮**：删除对应的 `<button class="tabbtn" … id="btn-examples">` / `id="btn-practice"`（按钮是静态标记，不随 TABS 自动消失）；
 4. **同步 TABS 数组**：`var TABS = ["home","topic1","topic2","examples","practice","summary"]` 删掉 `"examples","practice"`；
 5. **清理跳转键**：全文搜索 `goto('examples')` / `goto('practice')` / `gotoText('…')`，凡目标落在已删板块的，删除该入口或改指向；sidebar 由 DOM 自动采集（h2/h3/.qt），无需手动改；
-6. **验证**：跑 `node scripts/check_page.js page.html`，principle 原型下不再要求 examples/practice；再手动点一遍剩余 tab、目录跳转、跨页 gotoText。
+6. **验证**：跑 `node core/scripts/check_page.js page.html`，principle 原型下不再要求 examples/practice；再手动点一遍剩余 tab、目录跳转、跨页 gotoText。
 
 裁成 `review` 型：同样删 examples/practice，并允许把知识板块的首次教学压缩为表格 / 对照 / 决策树 / 公式卡（复习层表达），但总结里不允许第一次出现新方法。
 

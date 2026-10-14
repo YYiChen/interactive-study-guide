@@ -41,7 +41,7 @@
 运行：
 
 ```bash
-node scripts/check_page.js page.html
+node core/scripts/check_page.js page.html
 ```
 
 输出语义：
@@ -59,6 +59,15 @@ node scripts/check_page.js page.html
 - MathJax；
 - 移动端抽屉；
 - 动效数值一致性。
+
+## E. 领域专项审计
+
+领域适配器可追加自己的一层验收（放在 D 之后，不替代 A–D）：
+
+- **工程**：量纲、边界/初值、近似范围、极限情形、数值回代（本文件 C 节的工程口径）。
+- **语言学习（IELTS）**：每个知识节点 `sources[]` 非空；个人强调与经验总结是否保留；是否出现了资料里没有的内容（类型、技巧、素材、范文）；答案是否默认折叠；IA 是否经用户确认；未观察到的能力是否被误写成“不考”。
+
+领域审计的检查项写在对应 `domains/<domain>/` 文件里，本文件只规定它必须存在。
 
 ## Checker 不能做什么
 
