@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  Interactive Study Guide v5.1 · 页面原型参考实现（exam-prep 完整版）
+  Interactive Study Guide v5.3 · 页面原型参考实现（exam-prep 完整版）
 
   本模板是什么：
   - 它是页面原型库中 exam-prep（考试预习）的完整参考实现，提供成熟 UI/导航引擎；
@@ -9,20 +9,26 @@
 
   本模板不规定什么：
   - 不规定具体学科知识、板块数量、每题一个前置块、每页固定数量的自检/表格/动效；
-  - 是否加入某个组件由学习任务决定；但"图与交互最低要求"是硬规则（每个知识板块
-    至少 1 个视觉锚点；C 类关系演化图默认必须可交互），不随原型放松。
+  - 是否加入某个组件由学习任务决定；但"图与视觉材料的硬规则"不随原型放松：
+    承载知识的图必须登记并与知识/题目关联；配图充分性按视觉需求（VR-*）判定，
+    不按图数配额；C 类按学习收益选择交互或清楚的静态对照。
 
   当前声明：data-archetype="exam-prep"（总览 → 知识板块 → 例题 → 训练 → 总结）
   领域声明：data-domain="engineering"（默认域）。换领域时改 body 上的 data-domain，
   并先读 domains/<domain>/domain.md；领域只调整组织轴与表达口径，不放松 core 规则。
+  视觉声明：data-visual-contract="v1" + #isg-visual-map（见 body 后的注释块）。
   改成 principle / review 时：删 page-examples / page-practice 两个 tabpage 整块 +
   顶栏 btn-examples / btn-practice 两个按钮 + TABS 数组里两项 + 所有指向它们的
   goto('…')（含各 pager 里的"下一页"按钮），并把 body 上的 data-archetype 改掉。
 
   结构与规则见 core/references/teaching-architecture.md、content-rules.md、page-structure.md、
-  page-archetypes.md、interactive-patterns.md。
+  page-archetypes.md、interactive-patterns.md、visual-material.md。
   完成后运行：node core/scripts/check_page.js <page.html>
 -->
+<!-- 执行路径：guided 默认复用本模板；autonomous 可使用等效组件与结构，
+     保留实际需要的导航、可访问性与正确性，不为遵循模板制造无关板块。
+     验证按本轮改动范围选择；已通过且无新变化/疑点时结束。 -->
+
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -240,7 +246,52 @@
   .msupnote .msup{margin-right:8px;}
 </style>
 </head>
-<body data-archetype="exam-prep" data-domain="engineering">
+<body data-archetype="exam-prep" data-domain="engineering" data-visual-contract="v1">
+<!--
+  视觉材料契约（v5.2）· 可选但推荐：
+
+  1. 本页的视觉需求写在下面的 #isg-visual-map（JSON）里：哪条需求是 required，
+     就说明"读者必须看见某个结构才能完成某个动作"；required 的需求必须在本页
+     找到对应图，否则 checker 失败（除非在 note 里写明缺口原因）。
+  2. 每个 .diag 用 data-fig-id / data-fig-role / data-fig-req 声明身份：
+       data-fig-id="FIG-A"           全页唯一，增量更新与替换时用它定位
+       data-fig-role="evidence|teaching|demo"
+       data-fig-req="VR-001 VR-002"  这张图支撑哪些视觉需求
+       原始证据图再加 data-fig-source="文件#页码或图号"，便于回查考试口径
+  3. 位图用 <img src alt>，本地相对路径必须真实存在；空 .diag、[IMG] 占位会被判错。
+  4. 图与正文、公式、题目、答案必须一致（五条一致性检查）；checker 只证明声明与
+     文件对得上，不证明结构正确、也不证明图片真的渲染出来。
+
+  规则见 core/references/visual-material.md §1–§2、§5–§6。
+-->
+<script type="application/json" id="isg-visual-map">
+{
+  "requirements": [
+    {
+      "id": "VR-001",
+      "subject": "【知识节点或题目 id】",
+      "reader_action": "【读者要完成的动作：判断哪只二极管导通 / 读出某个量 / 对照两个状态】",
+      "must_see": "【必须看见的结构或关系】",
+      "need": "required",
+      "fig_ids": ["FIG-A"],
+      "anchor": "demo-slider",
+      "status": "placed",
+      "note": ""
+    },
+    {
+      "id": "VR-002",
+      "subject": "【知识节点 id】",
+      "reader_action": "【读图动作】",
+      "must_see": "【结构、连接或几何关系】",
+      "need": "required",
+      "fig_ids": ["FIG-B"],
+      "anchor": "【图所在板块锚点】",
+      "status": "placed",
+      "note": "【若此需求暂时无图，在这里写明原因与影响，checker 降为警告】"
+    }
+  ]
+}
+</script>
 
 <div class="side-backdrop" id="sideBackdrop"></div>
 <div class="app">
@@ -324,11 +375,12 @@
 <h3>关键一步为什么成立？</h3>
 <p>【只展开真正阻断理解的推导步骤。】</p>
 
-<!-- ============ 视觉锚点示范（每个知识板块至少 1 个；用时整块替换） ============ -->
+<!-- ============ 视觉示范（按视觉需求 VR-* 放，不是按板块配额；用时整块替换） ============ -->
 <!-- 这是"参数敏感性"类交互的最小可抄骨架：独立 IIFE + 元素守卫 + 初始化跑一次。
      SVG 里画静态部分（轴/标签），JS 只更新会动的元素；JS 失效时静态图仍可读。
-     落在参数敏感性/时间演化/几何关系/图形读法/方法对比五类之一的图，默认必须可交互。 -->
-<div class="diag" id="demo-slider" style="text-align:left;">
+     参数敏感性/时间演化/几何关系/图形读法/方法对比是交互候选；
+     按读者任务选择交互或清楚的静态对照，不按类别自动加控件。 -->
+<div class="diag" id="demo-slider" data-fig-id="FIG-A" data-fig-role="demo" data-fig-req="VR-001" style="text-align:left;">
 <div style="font-size:13px;margin:0 16px 6px;">🎛 <b>参数探险器</b>：拖动滑块，看曲线与读数怎么变</div>
 <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;align-items:flex-start;">
 <svg id="dSvg" width="430" height="250" viewBox="0 0 430 250" role="img" aria-label="参数-结果曲线示意图"><!-- 静态坐标轴与标签画在这里 --></svg>
@@ -382,8 +434,9 @@
 
 <!-- ============ 静态图示范（几何/示意类用；用时整块替换） ============ -->
 <!-- 静态图契约：.diag 容器 + .cap 图注三要素；坐标轴/单位/正方向/关键标记必须可读；
-     远处标签用细引导线连回对象；一张图标注控制在 8 个以内。 -->
-<div class="diag">
+     远处标签用细引导线连回对象；一张图标注控制在 8 个以内。
+     若这张图来自课程原图，用 <img src alt> 并加 data-fig-role="evidence" + data-fig-source。 -->
+<div class="diag" data-fig-id="FIG-B" data-fig-role="teaching" data-fig-req="VR-002">
 <svg width="430" height="220" viewBox="0 0 430 220" role="img" aria-label="几何示意图"><!-- 静态示意图：坐标轴 + 标注 + 引导线 --></svg>
 <div class="cap">图 A · 它让【几何关系 / 部件位置】变得可见；观察横轴、纵轴标注与关键标记；结论：【一句静态结论】</div>
 </div>
@@ -416,6 +469,8 @@
 <h1>📚 例题</h1>
 <p class="sub">用于观察课程材料中的代表性解题动作。例题答案也必须通过 Solution-backward Audit。</p>
 <h2>例题一 · 【来源 / 能力】</h2>
+<!-- 题图规则：题目若依赖一张图，用原题图 <img>（data-fig-role="evidence" + data-fig-source），
+     不要把题图改画成 SVG；确需重绘须经用户确认，并在图注标明"依据原题重绘"。见 visual-material.md §3.1。 -->
 <div class="practice">
 <div class="practice-title">【原题或忠实改编题】</div>
 <p>【题目】</p>
@@ -431,6 +486,7 @@
 <h1>📝 训练</h1>
 <p class="sub">Transfer / Exam Practice。若答案需要正文从未教过的方法，应回修正文，而不是在题前临时补课。</p>
 <h2>综合训练</h2>
+<!-- 题图同样用原图；训练题若依赖图而原图不可得，该题应标缺口而不是自绘。 -->
 <div class="practice">
 <div class="practice-title">Exam Practice · 【题目】</div>
 <p>【尽量模拟真实考核，不泄露方法标签。】</p>

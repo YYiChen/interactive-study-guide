@@ -1,10 +1,15 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "project": {
     "title": "",
     "domain": "engineering",
     "baseline_contract": "current learning scope starts from zero unless otherwise specified",
-    "last_updated": ""
+    "last_updated": "",
+    "execution": {
+      "profile": "guided",
+      "selected_by": "conservative-default",
+      "reason": "Unknown tools/task evidence; user or project setting takes precedence."
+    }
   },
   "coverage_areas": [
     {
@@ -26,6 +31,33 @@
       "observed_scope": [],
       "relation_to_existing": "new",
       "notes": ""
+    }
+  ],
+  "figures": [
+    {
+      "id": "FIG-001",
+      "material_id": "MAT-001",
+      "locator": "",
+      "path": "",
+      "context": "",
+      "role": "evidence",
+      "links": [],
+      "integrity": "complete",
+      "integrity_note": "",
+      "status": "located"
+    }
+  ],
+  "visual_requirements": [
+    {
+      "id": "VR-001",
+      "subject": "K-001",
+      "reader_action": "",
+      "must_see": "",
+      "need": "required",
+      "fig_ids": [],
+      "anchor": "",
+      "status": "located",
+      "note": ""
     }
   ],
   "knowledge_nodes": [

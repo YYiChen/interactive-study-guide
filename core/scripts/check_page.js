@@ -1,14 +1,21 @@
 #!/usr/bin/env node
 /*
- * Interactive Study Guide v5.1 — static checker
+ * Interactive Study Guide v5.2 — static checker
  * Usage: node core/scripts/check_page.js <page.html>
  *
  * This checker verifies mechanical HTML/UI consistency only.
  * It does NOT prove subject-matter correctness, prerequisite completeness,
- * assessment scope, or pedagogical quality. Those require the audits in
- * core/references/verification.md.
+ * assessment scope, or pedagogical quality. It also does NOT prove that a
+ * figure's topology is right, that images actually render, or that a visual
+ * requirement is pedagogically satisfied. Those require the audits in
+ * core/references/verification.md and core/references/visual-material.md.
+ *
+ * Visual checks are strict only for pages that declare data-visual-contract
+ * (or <meta name="isg-visual-contract">). Legacy pages keep the old behaviour
+ * and only get advisory notes, so existing projects are not retro-broken.
  */
 const fs = require('fs');
+const path = require('path');
 const file = process.argv[2];
 if (!file) { console.error('usage: node core/scripts/check_page.js <page.html>'); process.exit(2); }
 const raw = fs.readFileSync(file, 'utf8');
@@ -26,6 +33,11 @@ const scriptRe = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi;
 let m, nScript = 0;
 while ((m = scriptRe.exec(html)) !== null) {
   nScript++;
+  const openTag = m[0].slice(0, m[0].indexOf('>') + 1);
+  if (/type=["']application\/(?:ld\+)?json["']/i.test(openTag)) {
+    out.push(`  script ${nScript}: JSON data block (not executed)`);
+    continue;
+  }
   try { new Function(m[1]); out.push(`  script ${nScript}: OK`); }
   catch (e) { FAIL(`script ${nScript}: ${e.message}`); }
 }
@@ -206,11 +218,196 @@ const interactives =
 out.push(`  interactive widgets detected: ${interactives}`);
 if (diagCount > 0 && interactives === 0) INFO('figures exist but no interactive widget detected — fine for type A (structure/apparatus) and static comparison tables; if any type C figure (parameter sensitivity / time evolution / geometry / graph reading / method comparison) is present, make it interactive (see interactive-patterns.md)');
 
+/* 14. visual material contract (v5.2) */
+out.push('--- visual assets ---');
+const contractMatch = /<body[^>]*data-visual-contract=["']([^"']+)["']/i.exec(html)
+  || /<meta[^>]+name=["']isg-visual-contract["'][^>]*content=["']([^"']+)["']/i.exec(html);
+const contract = contractMatch ? contractMatch[1].trim() : '';
+const strict = !!contract;
+if (strict) out.push(`  visual contract declared: ${contract}`);
+
+/* inner HTML of a div, by matching nesting (figure containers are divs) */
+function divInner(src, openIdx) {
+  let i = src.indexOf('>', openIdx);
+  if (i < 0) return '';
+  i += 1;
+  let depth = 1;
+  const re = /<div\b[^>]*>|<\/div\s*>/gi;
+  re.lastIndex = i;
+  let t;
+  while ((t = re.exec(src)) !== null) {
+    if (/^<\/div/i.test(t[0])) { depth--; if (depth === 0) return src.slice(i, t.index); }
+    else depth++;
+  }
+  return src.slice(i);
+}
+
+const diagRe = /<div[^>]*class=["'][^"']*\bdiag\b[^"']*["'][^>]*>/gi;
+const figs = [];
+let dm;
+while ((dm = diagRe.exec(html)) !== null) {
+  const tag = dm[0];
+  const attr = (n) => {
+    const r = new RegExp(n + '\\s*=\\s*["\']([^"\']*)["\']', 'i').exec(tag);
+    return r ? r[1].trim() : '';
+  };
+  const body = divInner(html, dm.index);
+  figs.push({
+    id: attr('data-fig-id'),
+    role: attr('data-fig-role'),
+    req: (attr('data-fig-req') || '').split(/[\s,]+/).filter(Boolean),
+    source: attr('data-fig-source'),
+    body
+  });
+}
+out.push(`  figure containers: ${figs.length}`);
+
+/* 14a. declared figure ids unique */
+const figIds = figs.map(f => f.id).filter(Boolean);
+const dupFig = [...new Set(figIds.filter((x, i) => figIds.indexOf(x) !== i))];
+if (dupFig.length) {
+  (strict ? FAIL : WARN)(`duplicate data-fig-id: ${dupFig.join(', ')} (one figure id must identify exactly one figure)`);
+} else if (figIds.length) out.push(`  figure ids unique (${figIds.length})`);
+
+/* 14b. empty / placeholder containers */
+const PLACEHOLDER = /\[IMG\]|【图片?】|\[图\]|TODO|FIXME|待补图|占位图|placeholder/i;
+let emptyFig = 0, phFig = 0, widgetFig = 0;
+for (const f of figs) {
+  const name = f.id || '(no data-fig-id)';
+  const hasObj = /<svg[\s>]/i.test(f.body) || /<img[\s>]/i.test(f.body) ||
+                 /<canvas[\s>]/i.test(f.body) || /<table[\s>]/i.test(f.body) ||
+                 /<iframe[\s>]/i.test(f.body);
+  const hasControl = /<input[\s>]/i.test(f.body) || /<select[\s>]/i.test(f.body) || /<button[\s>]/i.test(f.body);
+  const txt = f.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (PLACEHOLDER.test(txt)) {
+    phFig++;
+    (strict ? FAIL : WARN)(`figure ${name}: placeholder text instead of a real figure (${txt.slice(0, 40)})`);
+  } else if (!hasObj && hasControl) {
+    widgetFig++;
+    INFO(`figure ${name}: control-only widget (no svg/img/table) — acceptable for a numeric explorer, but the static conclusion must be visible in the caption`);
+  } else if (!hasObj) {
+    emptyFig++;
+    if (txt.length > 40) WARN(`figure ${name}: no svg/img/canvas/table/iframe inside .diag (text-only figure)`);
+    else (strict ? FAIL : WARN)(`figure ${name}: empty figure container (no svg/img/canvas/table)`);
+  }
+}
+if (!emptyFig && !phFig && figs.length) out.push('  no empty / placeholder figure container');
+
+/* 14c. local image files must exist */
+const imgSrcs = [...html.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["']/gi)].map(x => x[1]);
+let imgMissing = 0;
+for (const src of imgSrcs) {
+  if (/^(?:https?:|data:|blob:|\/\/)/i.test(src)) continue;
+  const rel = src.split(/[?#]/)[0];
+  const abs = path.resolve(path.dirname(path.resolve(file)), decodeURI(rel));
+  if (!fs.existsSync(abs)) {
+    imgMissing++;
+    (strict ? FAIL : WARN)(`image not found: ${src} (resolved: ${abs})`);
+  }
+}
+if (imgSrcs.length && !imgMissing) out.push(`  local images exist (${imgSrcs.length})`);
+
+/* 14d. visual requirement map */
+let vrMap = null;
+const mapRe = /<script[^>]*id=["']isg-visual-map["'][^>]*>([\s\S]*?)<\/script>/i;
+const mmap = mapRe.exec(html);
+if (mmap) {
+  try { vrMap = JSON.parse(mmap[1]); }
+  catch (e) { FAIL('isg-visual-map JSON parse error: ' + e.message); }
+}
+if (vrMap) {
+  const reqs = Array.isArray(vrMap.requirements) ? vrMap.requirements : [];
+  const byId = new Map();
+  for (const r of reqs) {
+    if (!r || !r.id) { FAIL('[visual] requirement entry without id'); continue; }
+    if (byId.has(r.id)) FAIL(`[visual] duplicate requirement id ${r.id}`);
+    byId.set(r.id, r);
+  }
+  const figSet = new Set(figIds);
+  let openRequired = 0, documentedGap = 0;
+  for (const r of reqs) {
+    const need = String(r.need || 'required').toLowerCase();
+    if (!['required', 'helpful', 'unnecessary'].includes(need)) {
+      WARN(`[visual] ${r.id}: unknown need "${r.need}" (use required / helpful / unnecessary)`);
+    }
+    const refs = (Array.isArray(r.fig_ids) ? r.fig_ids : (r.fig ? [r.fig] : [])).filter(Boolean);
+    if (need === 'required') {
+      if (!refs.length) {
+        openRequired++;
+        if (String(r.note || '').trim()) {
+          documentedGap++;
+          WARN(`[visual] required ${r.id} has no figure (documented gap: ${String(r.note).slice(0, 60)})`);
+        } else {
+          FAIL(`[visual] required ${r.id} has no figure and no recorded reason (anchor: ${r.anchor || '?'})`);
+        }
+      }
+    }
+    for (const fid of refs) {
+      if (!figSet.has(fid)) {
+        (need === 'required' ? FAIL : WARN)(`[visual] ${r.id} points to figure "${fid}" which is not present on this page (anchor: ${r.anchor || '?'})`);
+      }
+    }
+  }
+  out.push(`  visual requirements: ${reqs.length} (required without figure: ${openRequired}, documented gaps: ${documentedGap})`);
+  const nRequired = reqs.filter(r => String(r.need || 'required').toLowerCase() === 'required').length;
+  if (!reqs.length) {
+    WARN('[visual] visual contract declared but the requirement list is empty; declare the tasks that depend on a structure, or drop the contract');
+  } else if (nRequired === 0) {
+    WARN('[visual] no requirement is marked required; if any knowledge tab depends on structure/connection/waveform, this is likely an under-declaration (see visual-material.md §2)');
+  }
+  for (const f of figs) {
+    for (const rid of f.req) {
+      if (!byId.has(rid)) FAIL(`[visual] figure ${f.id || '(no id)'} references undeclared requirement "${rid}"`);
+    }
+  }
+  if (strict) {
+    const noreq = figs.filter(f => !f.id);
+    if (noreq.length) WARN(`[visual] ${noreq.length} figure(s) lack data-fig-id; incremental updates cannot target them`);
+    const badRole = figs.filter(f => f.role && !['evidence', 'teaching', 'demo'].includes(f.role));
+    if (badRole.length) WARN(`[visual] unknown data-fig-role on ${badRole.length} figure(s): ${badRole.map(f => f.role).join(', ')} (use evidence / teaching / demo)`);
+    const evNoSrc = figs.filter(f => f.role === 'evidence' && !f.source);
+    if (evNoSrc.length) WARN(`[visual] ${evNoSrc.length} evidence figure(s) without data-fig-source; original figures should stay traceable`);
+    /* text references to figure numbers that have no caption on this page */
+    const capNums = new Set(Object.keys(seen));
+    const refs = [...new Set([...html.matchAll(/(?:见|参见|如)\s*图\s*([0-9A-Za-z]+(?:[.\-‑–—][0-9A-Za-z]+)*['′″]?)/g)].map(x => x[1]))];
+    const dangling = refs.filter(r => !capNums.has(r));
+    if (dangling.length) WARN(`[visual] text refers to figure(s) with no caption here: ${dangling.join(', ')} (check numbering or cross-page wording)`);
+  }
+} else if (strict) {
+  WARN('data-visual-contract declared but no #isg-visual-map block; required visual requirements cannot be checked');
+}
+
+/* 14e. question figures (examples / practice) should be the original */
+const qTabs = tabs.filter(t => /practice|examples/i.test(t.id));
+let redrawnQ = 0, qFigCount = 0;
+for (const t of qTabs) {
+  const ftagRe = /<div[^>]*class=["'][^"']*\bdiag\b[^"']*["'][^>]*>/gi;
+  let fm;
+  while ((fm = ftagRe.exec(t.body)) !== null) {
+    qFigCount++;
+    const roleM = /data-fig-role\s*=\s*["']([^"']*)["']/i.exec(fm[0]);
+    const idM = /data-fig-id\s*=\s*["']([^"']*)["']/i.exec(fm[0]);
+    const role = roleM ? roleM[1].trim().toLowerCase() : '';
+    if (role && role !== 'evidence') {
+      redrawnQ++;
+      WARN(`[visual] ${t.id}: figure ${idM ? idM[1] : '(no id)'} declared "${role}" — question figures should normally be the original (evidence); for an auxiliary drawing or an authorized adapted question, retain available original evidence, label the role/changed conditions, and verify the matching answer (visual-material.md §3.1). This warning is not a blanket ban on auxiliary drawings.`);
+    }
+  }
+}
+if (strict && qFigCount && !redrawnQ) out.push(`  question tabs use original figures (${qFigCount} figure(s) checked)`);
+
+/* 14f. legacy migration hint */
+if (!strict && figs.length) {
+  INFO('legacy page: no data-visual-contract; figure integrity checks are advisory. Add <body data-visual-contract="v1"> + #isg-visual-map to opt in (see core/references/visual-material.md §2)');
+}
+
 /* final */
 out.push('=====================================');
 if (fail) out.push(`FAIL: ${fail} hard issue(s), ${warn} warning(s)`);
 else if (warn) out.push(`PASS WITH WARNINGS: ${warn} warning(s)`);
 else out.push('PASS: structural checks clean');
 out.push('Structural pass ≠ subject correctness. Run Coverage / Dependency / Solution-backward / Correctness audits too.');
+out.push('Figure existence ≠ figure correctness. Topology, polarity and figure/text/formula consistency need the Structure Audit;');
+out.push('actual image rendering (load, crop, overlap) is a browser-level check this script cannot perform.');
 console.log(out.join('\n'));
 process.exit(fail ? 1 : 0);

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fixture · warn_all_helpful</title>
+</head>
+<body data-archetype="exam-prep" data-visual-contract="v1">
+<script type="application/json" id="isg-visual-map">
+{"requirements":[
+{"id":"VR-001","subject":"K-001","reader_action":"读出图中结构","must_see":"端子与连接","need":"helpful","fig_ids":["FIG-01"],"anchor":"fig-1","status":"placed","note":""},
+{"id":"VR-002","subject":"K-002","reader_action":"追踪电流路径","must_see":"闭合回路","need":"helpful","fig_ids":[],"anchor":"fig-1","status":"located","note":""}]}
+</script>
+<div class="tabpage" id="page-topic1">
+<h2 id="fig-1">全部需求都被降级为 helpful</h2>
+<div class="diag" data-fig-id="FIG-01" data-fig-role="teaching">
+<svg width="200" height="100" viewBox="0 0 200 100" role="img" aria-label="示意图"><rect x="10" y="10" width="80" height="60" fill="none" stroke="#334155"/></svg>
+<div class="cap">图 A · 它让结构可见；观察端子；结论：测试用图。</div>
+</div>
+</div>
+</body>
+</html>

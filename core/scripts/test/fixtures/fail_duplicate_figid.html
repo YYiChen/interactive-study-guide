@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fixture · fail_duplicate_figid</title>
+</head>
+<body data-archetype="exam-prep" data-visual-contract="v1">
+<script type="application/json" id="isg-visual-map">
+{"requirements":[{"id":"VR-001","subject":"K-001","reader_action":"读出图中结构","must_see":"端子与连接","need":"required","fig_ids":["FIG-01"],"anchor":"fig-1","status":"placed","note":""}]}
+</script>
+<div class="tabpage" id="page-topic1">
+<h2 id="fig-1">重复的图 ID</h2>
+<div class="diag" data-fig-id="FIG-01" data-fig-role="teaching">
+<svg width="200" height="100" viewBox="0 0 200 100" role="img" aria-label="示意图甲"><rect x="10" y="10" width="80" height="60" fill="none" stroke="#334155"/></svg>
+<div class="cap">图 A · 它让结构可见；观察端子；结论：第一张。</div>
+</div>
+<div class="diag" data-fig-id="FIG-01" data-fig-role="teaching">
+<svg width="200" height="100" viewBox="0 0 200 100" role="img" aria-label="示意图乙"><circle cx="60" cy="40" r="20" fill="none" stroke="#334155"/></svg>
+<div class="cap">图 B · 它让布局可见；观察位置；结论：第二张。</div>
+</div>
+</div>
+</body>
+</html>
